@@ -1,0 +1,23 @@
+# Install: dep install
+# Deploy: dep deploy
+
+# The target domain
+neos-site.com:
+  # Put here the hostname
+  hostname: __SERVER__.web5.mynet.at
+
+  # Put here the username
+  user: web__USER__
+
+  # Put here the ssh repository
+  repository: git@github.com:__OWNER__/__REPOSITORY__.git
+
+  # Add here the slack webhook
+  slack_webhook: https://hooks.slack.com/services/__YOUR/SLACK/WEBHOOK__
+
+  port: 22
+  forwardAgent: false
+  multiplexing: true
+  sshOptions:
+    UserKnownHostsFile: /dev/null
+    StrictHostKeyChecking: no

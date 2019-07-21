@@ -1,0 +1,21 @@
+{
+    "name": "jonnitto/neos-deployer",
+    "description": "Unofficial deployer recipes for interacting with Neos CMS.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jon Uhlmann",
+            "email": "me@jonnitto.ch"
+        }
+    ],
+    "autoload": {
+        "files": [
+            "autoload.php"
+        ]
+    },
+    "require": {
+        "deployer/deployer": "^6.4",
+        "deployer/recipes": "^6.2"
+    }
+}
