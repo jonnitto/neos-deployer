@@ -133,10 +133,10 @@ task('install:nginx', function () {
     run('sudo service nginx reload');
 })->setPrivate()->onRoles('Installation');
 
-task('deploy:reload_php', function () {
+task('deploy:restart_php', function () {
     run('sudo service php-fpm reload');
 })->setPrivate()->onRoles('Installation');
-after('deploy:symlink', 'deploy:reload_php');
+after('deploy:symlink', 'deploy:restart_php');
 
 
 function punktDeUpload(string $file, string $path)
