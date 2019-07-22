@@ -14,6 +14,8 @@ task('install', [
     'install:check',
     'ssh:key',
     'install:wait',
+    'install:php_settings',
+    'deploy:restart_php',
     'deploy:prepare',
     'deploy:lock',
     'deploy:release',
@@ -35,6 +37,10 @@ task('install', [
     'install:output_db',
     'install:output_oauth'
 ]);
+
+task('install:set_credentials', function () {
+    run('echo "memory_limit = 1024M" > ~/etc/php.d/memory_limit.ini');
+})->shallow()->setPrivate();
 
 task('install:set_credentials', function () {
     set('dbName', '{{user}}');
@@ -103,7 +109,7 @@ task('install:symlink', function () {
 })->setPrivate();
 
 
-task('deploy:reload_php', function () {
-    run('killall -q php-fpm || true;');
+task('deploy:restart_php', function () {
+    run('uberspace tools restart php');
 })->setPrivate();
-after('deploy:symlink', 'deploy:reload_php');
+after('deploy:symlink', 'deploy:restart_php');
