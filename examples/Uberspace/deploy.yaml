@@ -16,9 +16,6 @@ neos-site.com:
   # Add here the slack webhook
   slack_webhook: https://hooks.slack.com/services/__YOUR/SLACK/WEBHOOK__
 
-  port: 22
-  forwardAgent: false
-  multiplexing: true
   sshOptions:
     UserKnownHostsFile: /dev/null
     StrictHostKeyChecking: no

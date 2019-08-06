@@ -13,6 +13,16 @@ set('shared_files', [
     'Configuration/Settings.yaml',
 ]);
 
+// Set default values
+set('port', 22);
+set('forwardAgent', false);
+set('multiplexing', true);
+set('deployUser', function () {
+    $gitUser = runLocally('git config --get user.name');
+    return $gitUser ? $gitUser : get('user');
+});
+set('slack_text', '_{{deployUser}}_ deploying `{{branch}}` to *{{target}}*');
+
 
 desc('Create and/or read the deployment key');
 task('ssh:key', function () {
