@@ -134,8 +134,10 @@ task('install:import_resources', function () {
 task('install:nginx', function () {
     run("sudo sed -i conf 's/welcome/neos/' /usr/local/etc/nginx/vhosts/ssl.conf");
     run("sudo sed -i conf 's%/var/www/neos/web%{{deploy_path}}/current/Web%' /usr/local/etc/nginx/include/neos.conf");
+    run("sudo sed -i conf 's%FLOW_CONTEXT Production%FLOW_CONTEXT Production/Live%' /usr/local/etc/nginx/include/neos.conf");
     run('sudo service nginx reload');
 })->setPrivate()->onRoles('Installation');
+
 
 task('deploy:restart_php', function () {
     run('sudo service php-fpm reload');
