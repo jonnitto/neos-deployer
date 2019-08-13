@@ -55,6 +55,7 @@ task('install:output_oauth')->onRoles('Production');
 task('install:success')->onRoles('Production');
 task('install:wait')->onRoles('Production');
 task('ssh:key')->onRoles('Production');
+task('deploy:flush_caches')->onRoles('Production');
 task('slack:notify')->onRoles('Production');
 task('slack:notify:success')->onRoles('Production');
 task('slack:notify:failure')->onRoles('Production');

@@ -26,6 +26,18 @@ set('deployUser', function () {
 set('slack_text', '_{{deployUser}}_ deploying `{{branch}}` to *{{target}}*');
 
 
+desc('Flush caches');
+task('deploy:flush_caches', function () {
+    $caches = get('flushCache', false);
+    if (is_array($caches)) {
+        foreach ($caches as $cache) {
+            run('FLOW_CONTEXT={{flow_context}} {{bin/php}} {{release_path}}/{{flow_command}} cache:flushone ' . $cache);
+        }
+    }
+});
+after('deploy:symlink', 'deploy:flush_caches');
+
+
 desc('Create and/or read the deployment key');
 task('ssh:key', function () {
     $hasKey = test('[ -f ~/.ssh/id_rsa.pub ]');
