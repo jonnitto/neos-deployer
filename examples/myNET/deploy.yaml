@@ -15,6 +15,18 @@ neos-site.com:
   # Add here the slack webhook
   slack_webhook: https://hooks.slack.com/services/__YOUR/SLACK/WEBHOOK__
 
+  # Add which caches should be flushed on deployment.
+  # Use this setting if you have Redis installed
+  # File caches get cleared automatically
+  flushCache:
+    - Neos_Fusion_Content
+    - Flow_Mvc_Routing_Resolve
+    - Flow_Mvc_Routing_Route
+    - Flow_Session_MetaData
+    - Flow_Session_Storage
+    - Neos_Media_ImageSize
+    - Flow_Security_Cryptography_HashService
+
   sshOptions:
     UserKnownHostsFile: /dev/null
     StrictHostKeyChecking: no
