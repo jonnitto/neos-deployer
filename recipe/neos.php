@@ -135,7 +135,7 @@ task('yarn:pipeline', function () {
 
 task('yarn:git', function () {
     runLocally('git add DistributionPackages/**/Resources/Public');
-    runLocally('git add DistributionPacka ge s/**/Resources/Private/Templates/I nlineAssets ');
+    runLocally('git add DistributionPackages/**/Resources/Private/Templates/InlineAssets ');
     runLocally('git commit -m ":lipstick: Build frontend resources" || echo ""');
     runLocally('git push');
 })->setPrivate();
