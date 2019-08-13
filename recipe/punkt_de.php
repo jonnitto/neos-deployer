@@ -29,6 +29,7 @@ task('install', [
     'deploy:publish_resources',
     'deploy:symlink',
     'cleanup',
+    'install:redis',
     'install:nginx',
     'deploy:unlock',
     'install:success',
@@ -61,6 +62,7 @@ task('slack:notify:success')->onRoles('Production');
 task('slack:notify:failure')->onRoles('Production');
 
 task('install:create_database')->onRoles('Installation');
+
 
 task('install:get_mysql_password', function () {
     $GLOBALS['dbPassword'] = run('sudo cat /usr/local/etc/mysql-password');
@@ -129,6 +131,17 @@ task('install:import_resources', function () {
         resourcesDecompress(parse('{{deploy_path}}/shared'));
     }
 })->setPrivate()->onRoles('Production');
+
+
+task('install:redis', function () {
+    if (!test('grep -sFq "redis_enable=\"YES\"" /etc/rc.conf')) {
+        run("sudo echo 'redis_enable=\"YES\"' >> /etc/rc.conf");
+        run("sudo service redis start");
+    }
+    if (!test('grep -sFq "/usr/local/bin/redis-cli flushall" /etc/rc.local')) {
+        run("sudo echo '/usr/local/bin/redis-cli flushall' >> /etc/rc.local");
+    }
+})->setPrivate()->onRoles('Installation');
 
 
 task('install:nginx', function () {
