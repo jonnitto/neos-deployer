@@ -15,6 +15,10 @@ set('shared_files', [
     'Configuration/Settings.yaml',
 ]);
 
+set('slack_title', function () {
+    return get('application', getRealHostname());
+});
+
 // Set default values
 set('port', 22);
 set('forwardAgent', false);
