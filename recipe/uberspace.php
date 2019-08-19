@@ -34,8 +34,7 @@ task('install', [
     'deploy:unlock',
     'cleanup',
     'install:success',
-    'install:output_db',
-    'install:output_oauth'
+    'install:output_db'
 ]);
 
 task('install:set_credentials', function () {
@@ -46,8 +45,6 @@ task('install:set_credentials', function () {
     set('dbName', '{{user}}');
     set('dbUser', '{{user}}');
     set('dbPassword', run('grep -Po -m 1 "password=\K(\S)*" ~/.my.cnf'));
-    set('authId', ask(' Please enter the id for the oAuth login ', generateUUID()));
-    set('authSecret', ask(' Please enter the secrect for the oAuth login ', generateUUID()));
 })->shallow()->setPrivate();
 
 task('install:settings', function () {
@@ -71,11 +68,6 @@ Neos: &settings
         host: localhost
 
 TYPO3: *settings
-
-GesagtGetan:
-  OAuth2Client:
-    clientId: {{authId}}
-    clientSecret: {{authSecret}}
 __EOF__
 ');
 })->setPrivate();

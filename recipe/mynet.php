@@ -32,8 +32,7 @@ task('install', [
     'deploy:unlock',
     'cleanup',
     'install:success',
-    'install:output_db',
-    'install:output_oauth'
+    'install:output_db'
 ]);
 
 task('install:set_credentials', function () {
@@ -46,8 +45,6 @@ task('install:set_credentials', function () {
     set('dbName', askChoice(' Please choose the name of the database ', $availableDB, 0));
     set('dbPassword', ask(' Please enter the password for the database user '));
     set('dbHost', ask(' Please enter the host for the database connection ', 'web5-db.mynet.at'));
-    set('authId', ask(' Please enter the id for the oAuth login ', generateUUID()));
-    set('authSecret', ask(' Please enter the secrect for the oAuth login ', generateUUID()));
 })->shallow()->setPrivate();
 
 
@@ -72,11 +69,6 @@ Neos: &settings
         host: "{{dbHost}}"
 
 TYPO3: *settings
-
-GesagtGetan:
-  OAuth2Client:
-    clientId: {{authId}}
-    clientSecret: {{authSecret}}
 __EOF__
 ');
 })->setPrivate();

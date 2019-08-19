@@ -119,19 +119,6 @@ task('install:output_db', function () {
 })->shallow()->setPrivate();
 
 
-task('install:output_oauth', function () {
-    $realHostname = getRealHostname();
-    outputTable(
-        'Please add these credentials to the oAuth database to enable login:',
-        [
-            'ID' => '{{authId}}',
-            'User' => '{{authSecret}}',
-            'Name' => "$realHostname on {{hostname}}"
-        ]
-    );
-})->shallow()->setPrivate();
-
-
 task('install:success', function () {
     writeln('');
     writeln('<info>Successfully installed!</info>');

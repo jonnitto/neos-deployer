@@ -33,8 +33,7 @@ task('install', [
     'install:nginx',
     'deploy:unlock',
     'install:success',
-    'install:output_db',
-    'install:output_oauth'
+    'install:output_db'
 ])->shallow();
 
 task('cleanup')->onRoles('Production');
@@ -52,7 +51,6 @@ task('deploy:writable')->onRoles('Production');
 task('install:check')->onRoles('Production');
 task('install:info')->onRoles('Production');
 task('install:output_db')->onRoles('Production');
-task('install:output_oauth')->onRoles('Production');
 task('install:success')->onRoles('Production');
 task('install:wait')->onRoles('Production');
 task('ssh:key')->onRoles('Production');
@@ -74,8 +72,6 @@ task('install:set_credentials', function () {
     set('dbName', "{{user}}_neos{$stage}");
     set('dbUser', 'root');
     set('dbPassword', $GLOBALS['dbPassword']);
-    set('authId', ask(' Please enter the id for the oAuth login ', generateUUID()));
-    set('authSecret', ask(' Please enter the secrect for the oAuth login ', generateUUID()));
 })->shallow()->setPrivate()->onRoles('Production');
 
 
@@ -99,11 +95,6 @@ Neos: &settings
         host: localhost
 
 TYPO3: *settings
-
-GesagtGetan:
-  OAuth2Client:
-    clientId: {{authId}}
-    clientSecret: {{authSecret}}
 __EOF__
 ');
 })->setPrivate()->onRoles('Production');
