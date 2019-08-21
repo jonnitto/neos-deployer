@@ -81,7 +81,6 @@ function resourcesUpload(string $path)
     resourcesDecompress($path);
 }
 
-
 function getRealHostname(): string
 {
     return Context::get()->getHost()->getHostname();
