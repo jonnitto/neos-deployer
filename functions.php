@@ -6,7 +6,6 @@ use Deployer\Task\Context;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Console\Helper\Table;
 
-
 function dbFlushDbSql(string $database): string
 {
     return sprintf('DROP DATABASE IF EXISTS `%s`; CREATE DATABASE `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;', $database, $database);
@@ -109,4 +108,33 @@ function outputTable(?string $headline, array $data)
 
     writeln("");
     writeln("");
+}
+
+function writebox($content, $bg = 'blue', $color = "white")
+{
+    // Replace strong with bold notation
+    $content = str_replace('</strong>', '</>', str_replace('<strong>', "<bg={$bg};fg={$color};options=bold>", parse($content)));
+    $contentArray = preg_split('/<br[^>]*>/i', $content);
+    $contents = [];
+    $maxLength = 0;
+    foreach ($contentArray as $key => $string) {
+        $length = grapheme_strlen(strip_tags($string));
+        $contents[$key] = [
+            'length' => $length,
+            'string' => $string
+        ];
+        if ($length > $maxLength) {
+            $maxLength = $length;
+        }
+    }
+    $placeholder = str_repeat(' ', $maxLength);
+
+    writeln('');
+    writeln("<bg={$bg}>    {$placeholder}    </>");
+    foreach ($contents as $array) {
+        $space = str_repeat(' ', $maxLength - $array['length']);
+        writeln("<bg={$bg};fg={$color}>    {$array['string']}{$space}    </>");
+    }
+    writeln("<bg={$bg}>    {$placeholder}    </>");
+    writeln('');
 }

@@ -49,8 +49,7 @@ task('ssh:key', function () {
         run('cat /dev/zero | ssh-keygen -q -N "" -t rsa -b 4096 -C "$(hostname -f)"');
     }
     $pub = run('cat ~/.ssh/id_rsa.pub');
-    writeln('');
-    writeln('<comment>Your id_rsa.pub key is:</comment>');
+    writebox('Your id_rsa.pub key is:');
     writeln("<info>$pub</info>");
     writeln('');
 
@@ -65,10 +64,7 @@ desc('Check if Neos is already installed');
 task('install:check', function () {
     $installed = test('[ -f {{deploy_path}}/shared/Configuration/Settings.yaml ]');
     if ($installed) {
-        writeln('');
-        writeln('<error> Neos seems already installed </error>');
-        writeln('<comment>Please remove the whole Neos folder to start over again.</comment>');
-        writeln('');
+        writebox('<strong>Neos seems already installed</strong><br>Please remove the whole Neos folder to start over again.', 'red');
         exit;
     }
 })->shallow()->setPrivate();
@@ -85,21 +81,15 @@ task('install:bash', function () {
 
 task('install:info', function () {
     $realHostname = getRealHostname();
-    writeln('');
-    writeln("✈︎ Installing <fg=magenta>$realHostname</fg=magenta> on <fg=cyan>{{hostname}}</fg=cyan>");
+    writebox("✈︎ Installing <strong>$realHostname</strong> on <strong>{{hostname}}</strong>");
 })->shallow()->setPrivate();
 
 
 desc('Wait for the user to continue');
 task('install:wait', function () {
-    writeln('');
-    writeln('<comment>Add this key as a deployment key in your repository</comment>');
-    writeln('<comment>under → Settings → Deploy keys</comment>');
-    writeln('');
+    writebox("<strong>Add this key as a deployment key in your repository</strong><br>under → Settings → Deploy keys");
     if (!askConfirmation(' Press enter to continue ', true)) {
-        writeln('');
-        writeln('<error> Installation canceled </error>');
-        writeln('');
+        writebox('Installation canceled', 'red');
         exit;
     }
     writeln('');
@@ -124,10 +114,7 @@ task('install:output_db', function () {
 
 
 task('install:success', function () {
-    writeln('');
-    writeln('<info>Successfully installed!</info>');
-    writeln('To deploy your site in the future, simply run <fg=cyan>dep deploy</fg=cyan>.');
-    writeln('');
+    writebox('<strong>Successfully installed!</strong><br>To deploy your site in the future, simply run <strong>dep deploy</strong>', 'green');
 })->shallow()->setPrivate();
 
 
