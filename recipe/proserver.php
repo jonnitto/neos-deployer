@@ -6,7 +6,7 @@ require_once 'neos.php';
 
 set('deploy_path', '/var/www/Neos');
 
-desc('Initialize installation on punkt.de');
+desc('Initialize installation on proserver.punkt.de');
 task('install', [
     'install:info',
     'install:check',
