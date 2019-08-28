@@ -19,17 +19,17 @@ task('install', [
     'deploy:vendors',
     'deploy:shared',
     'deploy:writable',
-    'install:get_mysql_password',
+    'install:set_globals',
     'install:set_credentials',
     'install:settings',
     'install:create_database',
     'install:import_database',
     'install:import_resources',
+    'install:redis',
     'deploy:run_migrations',
     'deploy:publish_resources',
     'deploy:symlink',
     'cleanup',
-    'install:redis',
     'install:nginx',
     'deploy:unlock',
     'install:success',
@@ -62,15 +62,17 @@ task('slack:notify:failure')->onRoles('Production');
 task('install:create_database')->onRoles('Installation');
 
 
-task('install:get_mysql_password', function () {
+task('install:set_globals', function () {
+    $stage = has('stage') ? '_{{stage}}' : '';
+    $GLOBALS['dbName'] = parse("{{user}}_neos{$stage}");
+    $GLOBALS['dbUser'] = 'root';
     $GLOBALS['dbPassword'] = run('sudo cat /usr/local/etc/mysql-password');
 })->shallow()->setPrivate()->onRoles('Installation');
 
 
 task('install:set_credentials', function () {
-    $stage = has('stage') ? '_{{stage}}' : '';
-    set('dbName', "{{user}}_neos{$stage}");
-    set('dbUser', 'root');
+    set('dbName', $GLOBALS['dbName']);
+    set('dbUser', $GLOBALS['dbUser']);
     set('dbPassword', $GLOBALS['dbPassword']);
 })->shallow()->setPrivate()->onRoles('Production');
 
@@ -137,7 +139,7 @@ task('install:redis', function () {
 
 task('install:nginx', function () {
     run("sudo sed -i conf 's/welcome/neos/' /usr/local/etc/nginx/vhosts/ssl.conf");
-    run("sudo sed -i conf 's%/var/www/neos/web%{{deploy_path}}/current/Web%' /usr/local/etc/nginx/include/neos.conf");
+    run("sudo sed -i conf 's%/var/www/neos/Web%{{deploy_path}}/current/Web%' /usr/local/etc/nginx/include/neos.conf");
     run("sudo sed -i conf 's%FLOW_CONTEXT Production%FLOW_CONTEXT Production/Live%' /usr/local/etc/nginx/include/neos.conf");
     run('sudo service nginx reload');
 })->setPrivate()->onRoles('Installation');
