@@ -74,11 +74,22 @@ function resourcesDecompress(string $path)
     runLocally("rm -f Resources.tgz");
 }
 
+function resourcesRepairPermissions()
+{
+    cd('{{deploy_path}}/shared/Data/Persistent/Resources');
+    $group = run('id -g -n');
+    writeln('Setting file permissions per file, this might take a while ...');
+    run("chown -R {{user}}:{$group} .");
+    run('find . -type d -exec chmod 775 {} \;');
+    run("find . -type f \! \( -name commit-msg -or -name '*.sh' \) -exec chmod 664 {} \;");
+}
+
 function resourcesUpload(string $path)
 {
     resourcesLocalCompress();
     upload("Resources.tgz", "{$path}/Resources.tgz", ['timeout' => null]);
     resourcesDecompress($path);
+    resourcesRepairPermissions();
 }
 
 function getRealHostname(): string

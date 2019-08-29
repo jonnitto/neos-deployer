@@ -122,6 +122,7 @@ task('install:import_resources', function () {
         resourcesLocalCompress();
         punktDeUpload('Resources.tgz', parse('{{deploy_path}}/shared'));
         resourcesDecompress(parse('{{deploy_path}}/shared'));
+        resourcesRepairPermissions();
     }
 })->setPrivate()->onRoles('Production');
 
