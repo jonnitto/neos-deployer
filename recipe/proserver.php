@@ -62,6 +62,19 @@ task('slack:notify:failure')->onRoles('Production');
 task('install:create_database')->onRoles('Installation');
 
 
+desc('Create a tunnel connection via localhost with the web user');
+task('tunnel:web', function () {
+    writebox('To close the tunnel, enter <strong>exit</strong> in the console');
+    runLocally('ssh -L 2222:127.0.0.1:22 -J jumping@ssh-jumphost.karlsruhe.punkt.de {{user}}@{{hostname}}', ['timeout' => null, 'tty' => true]);
+})->onRoles('Production');
+
+desc('Create a tunnel connection via localhost with the root user');
+task('tunnel:root', function () {
+    writebox('To close the tunnel, enter <strong>exit</strong> in the console');
+    runLocally('ssh -L 2222:127.0.0.1:22 -J jumping@ssh-jumphost.karlsruhe.punkt.de {{user}}@{{hostname}}', ['timeout' => null, 'tty' => true]);
+})->onRoles('Installation');
+
+
 task('install:set_globals', function () {
     $stage = has('stage') ? '_{{stage}}' : '';
     $GLOBALS['dbName'] = parse("{{user}}_neos{$stage}");
