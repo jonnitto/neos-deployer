@@ -117,25 +117,44 @@ task('install:success', function () {
     writebox('<strong>Successfully installed!</strong><br>To deploy your site in the future, simply run <strong>dep deploy</strong>', 'green');
 })->shallow()->setPrivate();
 
-
-task('yarn:pipeline', function () {
-    runLocally('yarn pipeline');
-})->setPrivate();
-
-
-task('yarn:git', function () {
-    runLocally('git add DistributionPackages/**/Resources/Public');
-    runLocally('git add DistributionPackages/**/Resources/Private/Templates/InlineAssets ');
-    runLocally('git commit -m ":lipstick: Build frontend resources" || echo ""');
-    runLocally('git push');
-})->setPrivate();
-
-
 desc('Build frontend files and push them to git');
-task('yarn', [
-    'yarn:pipeline',
-    'yarn:git'
-]);
+task('frontend', function () {
+    $config = get('frontend', []);
+
+    if (!array_key_exists('command', $config)) {
+        $config['command'] = 'yarn pipeline';
+    }
+
+    if (!array_key_exists('message', $config)) {
+        $config['message'] = 'STATIC: Build frontend resources';
+    }
+
+    if (!array_key_exists('paths', $config)) {
+        $config['paths'] = ['DistributionPackages/**/Resources/Public'];
+    }
+
+    if ($config['command']) {
+        runLocally($config['command'], ['timeout' => null]);
+    }
+
+    if (is_array($config['paths'])) {
+        $makeCommit = false;
+
+        foreach ($config['paths'] as $path) {
+            $hasFolder = runLocally("ls $path 2>/dev/null || true");
+            $hasCommits = !testLocally("git add --dry-run -- $path");
+            if ($hasFolder && $hasCommits) {
+                runLocally("git add $path");
+                $makeCommit = true;
+            }
+        }
+
+        if ($makeCommit) {
+            runLocally('git commit -m "' . $config['message'] . '" || echo ""');
+            runLocally('git push');
+        }
+    }
+});
 
 
 desc('Create release tag on git');

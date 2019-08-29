@@ -28,6 +28,18 @@ neos-site.com:
     - Neos_Media_ImageSize
     - Flow_Security_Cryptography_HashService
 
+  frontend:
+    # Add here the command who builds the frontend files, defaults to 'yarn pipeline'
+    command: 'yarn pipeline'
+    # Add here your commit message, defaults to 'STATIC: Build frontend resources'
+    message: 'STATIC: Build frontend resources'
+    # Add which paths should be added by the frontend:git task.
+    # The path will be checked if they exists and have commits
+    # Defaults to ['DistributionPackages/**/Resources/Public']
+    paths:
+      - 'DistributionPackages/**/Resources/Public'
+      - 'DistributionPackages/**/Resources/Private/InlineAssets'
+
   sshOptions:
     UserKnownHostsFile: /dev/null
     StrictHostKeyChecking: no
