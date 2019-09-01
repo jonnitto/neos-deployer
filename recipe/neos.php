@@ -6,7 +6,7 @@ require_once 'recipe/flow_framework.php';
 require_once 'Packages/Libraries/deployer/recipes/recipe/slack.php';
 require_once __DIR__ . '/../functions.php';
 
-set('flow_context', 'Production/Live');
+set('flow_context', get('flow_context', 'Production/Live'));
 
 set('bash_sync', 'https://raw.githubusercontent.com/jonnitto/bash/master/bash.sh');
 

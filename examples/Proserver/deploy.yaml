@@ -32,6 +32,9 @@
   # Defaults to true
   removeRobotsTxt: true
 
+  # Set the flow context, defaults to Production/Live
+  flow_context: Production
+
   frontend:
     # Add here the command who builds the frontend files, defaults to 'yarn pipeline'
     command: 'yarn pipeline'
