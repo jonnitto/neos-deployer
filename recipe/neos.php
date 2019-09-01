@@ -29,6 +29,13 @@ set('deployUser', function () {
 });
 set('slack_text', '_{{deployUser}}_ deploying `{{branch}}` to *{{target}}*');
 
+desc('Remove robots.txt file');
+task('deploy:remove_robotstxt', function () {
+    if (get('removeRobotsTxt', true)) {
+        run('rm {{release_path}}/Web/robots.txt');
+    }
+})->setPrivate();
+before('deploy:symlink', 'deploy:remove_robotstxt');
 
 desc('Flush caches');
 task('deploy:flush_caches', function () {

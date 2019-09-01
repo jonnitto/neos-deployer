@@ -28,6 +28,12 @@ neos-site.com:
     - Neos_Media_ImageSize
     - Flow_Security_Cryptography_HashService
 
+  # With Neos.Seo, the robots.txt get included in Neos and enable automatic sitmaplinks
+  # and other features. You can read more about this feature here:
+  # https://neos-seo.readthedocs.io/en/stable/#dynamic-robots-txt
+  # Defaults to true
+  removeRobotsTxt: true
+
   frontend:
     # Add here the command who builds the frontend files, defaults to 'yarn pipeline'
     command: 'yarn pipeline'
