@@ -101,7 +101,8 @@ task('install:symlink', function () {
 })->setPrivate();
 
 
-task('deploy:restart_php', function () {
+desc('Restart PHP');
+task('restart:php', function () {
     run('uberspace tools restart php');
 })->setPrivate();
-after('deploy:symlink', 'deploy:restart_php');
+after('deploy:symlink', 'restart:php');
