@@ -31,6 +31,7 @@ task('install', [
     'deploy:symlink',
     'cleanup',
     'install:nginx',
+    'restart:nginx',
     'deploy:unlock',
     'install:success',
     'install:output_db'
@@ -153,11 +154,19 @@ task('install:redis', function () {
 
 
 task('install:nginx', function () {
+    $neosConfFile = '/usr/local/etc/nginx/include/neos.conf';
     run("sudo sed -i conf 's/welcome/neos/' /usr/local/etc/nginx/vhosts/ssl.conf");
-    run("sudo sed -i conf 's%/var/www/neos/Web%{{deploy_path}}/current/Web%' /usr/local/etc/nginx/include/neos.conf");
-    run("sudo sed -i conf 's%FLOW_CONTEXT Production%FLOW_CONTEXT Production/Live%' /usr/local/etc/nginx/include/neos.conf");
-    run('sudo service nginx reload');
+    run("sudo sed -i conf 's%/var/www/neos/Web%{{deploy_path}}/current/Web%' $neosConfFile");
+    if (!test("grep -sFq 'FLOW_CONTEXT {{flow_context}}' $neosConfFile")) {
+        run("sudo sed -i conf 's%FLOW_CONTEXT Production%FLOW_CONTEXT {{flow_context}}%' $neosConfFile");
+    }
 })->setPrivate()->onRoles('Installation');
+
+
+desc('Restart nginx');
+task('restart:nginx', function () {
+    run('sudo service nginx reload');
+})->onRoles('Installation');
 
 
 desc('Restart PHP');
