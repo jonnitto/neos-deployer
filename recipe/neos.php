@@ -45,7 +45,7 @@ task('deploy:flush_caches', function () {
             run('FLOW_CONTEXT={{flow_context}} {{bin/php}} {{release_path}}/{{flow_command}} cache:flushone ' . $cache);
         }
     }
-});
+})->setPrivate();
 after('deploy:symlink', 'deploy:flush_caches');
 
 
@@ -65,6 +65,23 @@ task('ssh:key', function () {
         run("ssh-keyscan $repository >> ~/.ssh/known_hosts");
     }
 })->shallow();
+
+
+// Set some deploy tasks to private
+foreach ([
+    'clear_paths',
+    'copy_dirs',
+    'flush_caches',
+    'lock',
+    'prepare',
+    'release',
+    'shared',
+    'symlink',
+    'update_code',
+    'writable'
+] as $task) {
+    task("deploy:{$task}")->setPrivate();
+}
 
 
 desc('Check if Neos is already installed');
