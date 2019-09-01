@@ -37,31 +37,42 @@ task('install', [
     'install:output_db'
 ])->shallow();
 
-task('cleanup')->onRoles('Production');
-task('deploy:info')->onRoles('Production');
-task('deploy:lock')->onRoles('Production');
-task('deploy:prepare')->onRoles('Production');
-task('deploy:publish_resources')->onRoles('Production');
-task('deploy:release')->onRoles('Production');
-task('deploy:run_migrations')->onRoles('Production');
-task('deploy:symlink')->onRoles('Production');
-task('deploy:unlock')->onRoles('Production');
-task('deploy:update_code')->onRoles('Production');
-task('deploy:vendors')->onRoles('Production');
-task('deploy:writable')->onRoles('Production');
-task('install:check')->onRoles('Production');
-task('install:info')->onRoles('Production');
-task('install:output_db')->onRoles('Production');
-task('install:success')->onRoles('Production');
-task('install:wait')->onRoles('Production');
-task('ssh:key')->onRoles('Production');
-task('deploy:flush_caches')->onRoles('Production');
-task('slack:notify')->onRoles('Production');
-task('slack:notify:success')->onRoles('Production');
-task('slack:notify:failure')->onRoles('Production');
-task('frontend')->onRoles('Production');
+$roleProductionTasks = [
+    'cleanup',
+    'deploy:info',
+    'deploy:lock',
+    'deploy:prepare',
+    'deploy:publish_resources',
+    'deploy:release',
+    'deploy:run_migrations',
+    'deploy:remove_robotstxt',
+    'deploy:symlink',
+    'deploy:unlock',
+    'deploy:update_code',
+    'deploy:vendors',
+    'deploy:writable',
+    'install:check',
+    'install:info',
+    'install:output_db',
+    'install:success',
+    'install:wait',
+    'ssh:key',
+    'deploy:flush_caches',
+    'slack:notify',
+    'slack:notify:success',
+    'slack:notify:failure',
+    'frontend'
+];
+foreach ($roleProductionTasks as $task) {
+    task($task)->onRoles('Production');
+}
 
-task('install:create_database')->onRoles('Installation');
+$roleInstallationTasks = [
+    'install:create_database'
+];
+foreach ($roleInstallationTasks as $task) {
+    task($task)->onRoles('Installation');
+}
 
 
 desc('Create a tunnel connection via localhost with the web user');
