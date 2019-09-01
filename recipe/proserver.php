@@ -164,6 +164,46 @@ task('install:redis', function () {
 })->setPrivate()->onRoles('Installation');
 
 
+task('domain:force:ask', function() {
+    if (askConfirmation(' Do you want to force a specific domain? ', true)) {
+        $realHostname = getRealHostname();
+        $GLOBALS['domain'] = ask(' Please enter the domain ', "www.{$realHostname}");
+    }
+})->setPrivate()->shallow()->onRoles('Production');
+
+task('domain:force:write', function() {
+    if (isset($GLOBALS['domain'])) {
+        $confFile = '/usr/local/etc/nginx/vhosts/ssl.conf';
+
+        $redirectString = "  location / {\n    return 301 https://{$GLOBALS['domain']}\$request_uri;\n  }";
+
+        $firstLinenummerSecondEntry = run("cat $confFile | grep -n 'server {' | cut -d: -f 1 | tail -1");
+        $lastLinenummerFirstEntry = intval($firstLinenummerSecondEntry) - 1;
+        
+        $firstEntry = run("head -{$lastLinenummerFirstEntry} $confFile");
+        $secondEntry = run("tail -{$firstLinenummerSecondEntry} $confFile");
+
+        // Genereate the 3 server sections
+        $httpRedirectEntry = str_replace('$host', $GLOBALS['domain'], $firstEntry);
+        $httpsRedirectEntry = preg_replace('/^\s*include\s(.)+$\n/m', '', $secondEntry);
+        $httpsRedirectEntry = str_replace('}', "\n$redirectString\n}", $httpsRedirectEntry);
+        $httpsEntry = str_replace(' default_server', '', $secondEntry);
+        $httpsEntry = preg_replace('/server_name (.)+$/m', "server_name {$GLOBALS['domain']};", $httpsEntry);
+
+        // Overwrite the file
+        $fileContent = "{$httpRedirectEntry}\n{$httpsRedirectEntry}\n{$httpsEntry}";
+        run("echo '{$fileContent}' > {$confFile}");
+    }
+})->setPrivate()->shallow()->onRoles('Installation');
+
+desc('Configure the server to force a specific domain');
+task('domain:force', [
+    'domain:force:ask',
+    'domain:force:write',
+    'restart:nginx'
+])->shallow();
+
+
 task('install:nginx', function () {
     $neosConfFile = '/usr/local/etc/nginx/include/neos.conf';
     run("sudo sed -i conf 's/welcome/neos/' /usr/local/etc/nginx/vhosts/ssl.conf");
