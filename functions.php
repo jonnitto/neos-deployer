@@ -124,7 +124,7 @@ function writebox($content, $bg = 'blue', $color = "white")
 {
     // Replace strong with bold notation
     $content = str_replace('</strong>', '</>', str_replace('<strong>', "<bg={$bg};fg={$color};options=bold>", parse($content)));
-    $contentArray = preg_split('/<br[^>]*>/i', $content);
+    $contentArray = preg_split('/(<br[^>]*>|\n)/i', $content);
     $contents = [];
     $maxLength = 0;
     foreach ($contentArray as $key => $string) {
