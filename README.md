@@ -2,13 +2,13 @@
 
 You can look at the [examples](examples) folder to look how to set up a deployment.
 The files should be saved on the root of you project. In the `deploy.yaml` file you will
-find explanations for all the aavailable settings.
+find explanations for all the available settings.
 
 ## Hoster
 
 Currently, there are settings for these hoster:
 
-- Proserver from punkt.de
+- proServer from punkt.de
 - Uberspace
 
 ## Comands for every hoster
@@ -33,7 +33,7 @@ Run these taks with `dep COMMAND`. If you want to list all commands, enter `dep`
 | `config:dump`              | Print host configuration                  |
 | `config:hosts`             | Print all hosts                           |
 
-## Proserver
+## proServer
 
 **Additional available commands:**
 
