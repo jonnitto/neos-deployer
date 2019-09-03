@@ -104,5 +104,102 @@ task('install:symlink', function () {
 desc('Restart PHP');
 task('restart:php', function () {
     run('uberspace tools restart php');
-})->setPrivate();
+});
 after('deploy:symlink', 'restart:php');
+
+
+
+desc('Add a domain to uberspace');
+task('domain:add', function () {
+    $realHostname = getRealHostname();
+    $currentEntry = run('uberspace web domain list');
+    writebox("<strong>Add a domain to uberspace</strong>
+If you have multiple domains, you will be asked
+after every entry if you wand to add another domain.
+
+<strong>Current entry:</strong>
+$currentEntry
+
+To cancel enter <strong>exit</strong> as answer");
+
+    $suggestion = [$realHostname, "www.{$realHostname}"];
+    $firstDomain = askDomain('Please enter the domain', $suggestion[0], $suggestion);
+    if ($firstDomain == 'exit') {
+        return;
+    }
+    $domains = [
+        $firstDomain
+    ];
+    writeln('');
+    while ($domain = askDomain('Please enter another domain or press enter to continue', null, $suggestion)) {
+        if ($domain == 'exit') {
+            return;
+        }
+        if ($domain) {
+            $domains[] = $domain;
+        }
+        writeln('');
+    }
+    $outputDomains = implode("\n", $domains);
+    $ip = '';
+    foreach ($domains as $domain) {
+        $ip = run("uberspace web domain add $domain");
+    }
+    writebox("<strong>Following entries are added:</strong><br><br>$outputDomains<br><br>$ip", 'green');
+})->shallow();
+
+desc('Remove a domain from uberspace');
+task('domain:remove', function () {
+    $currentEntry = run('uberspace web domain list');
+    writebox("<strong>Remove a domain from uberspace</strong>
+If you have multiple domains, you will be asked
+after every entry if you wand to add another domain.
+
+<strong>Current entry:</strong>
+$currentEntry
+
+To finish the setup, press enter or choose the last entry");
+
+    $currentEntriesArray = explode(PHP_EOL, $currentEntry);
+    $currentEntriesArray[] = 'Finish setup';
+    $domains = [];
+
+    while ($domain = askChoice('Please choose the domain you want to remove', $currentEntriesArray, sizeof($currentEntriesArray) - 1)) {
+        if ($domain == 'Finish setup') {
+            break;
+        }
+        $domains[] = $domain;
+    }
+    if (sizeof($domains)) {
+        $outputDomains = implode("\n", $domains);
+        foreach ($domains as $domain) {
+            run("uberspace web domain del $domain");
+        }
+        writebox("<strong>Following entries are removed:</strong><br><br>$outputDomains", 'green');
+    } else {
+        writebox('<strong>No Domains are removed</strong>', 'red');
+    }
+})->shallow();
+
+desc('Set the PHP version on the server');
+task('php:version', [
+    'php:version:get',
+    'php:version:ask'
+])->shallow();
+
+
+task('php:version:get', function () {
+    $currentVersion = [];
+    preg_match('/(PHP [\d\.]+)/', run('php -v'), $currentVersion);
+    $availableVersions = run('uberspace tools version list php');
+    set('phpVersionCurrent', $currentVersion[0]);
+    set('phpVersionList', explode(PHP_EOL, str_replace('- ', '', $availableVersions)));
+})->setPrivate();
+
+
+task('php:version:ask', function () {
+    writebox('<strong>Set PHP version on uberspace</strong><br><br><strong>Current version:</strong><br>{{phpVersionCurrent}}');
+    $version = askChoice(' Please choose the desired version ', get('phpVersionList'));
+    $output = run("uberspace tools version use php $version");
+    writebox($output, 'green');
+})->shallow()->setPrivate();
