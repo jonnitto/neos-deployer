@@ -164,6 +164,59 @@ task('install:redis', function () {
 })->setPrivate()->onRoles('Installation');
 
 
+task('domain:ssl:domain', function () {
+    $GLOBALS['domain'] = getRealHostname();
+})->setPrivate()->shallow()->onRoles('Production');
+
+task('domain:ssl:write', function () {
+    $file = '/var/www/letsencrypt/domains.txt';
+    $currentEntry = run("cat $file");
+
+    writebox("<strong>Add Let's Encrypt SSL certificte</strong>
+If you have multiple domains, you will be asked
+after every entry if you wand to add another domain.
+
+<strong>Current entry:</strong>
+$currentEntry
+
+To cancel enter <strong>exit</strong> as answer
+");
+    $firstDomain = ask(' Please enter the domain ', "{$GLOBALS['domain']} www.{$GLOBALS['domain']}");
+    if ($firstDomain == 'exit') {
+        writebox('Canceled, nothing was written', 'red');
+        return;
+    }
+    $domains = [
+        $firstDomain
+    ];
+    writeln('');
+    while ($domain = ask(' Please add another the domain or press enter to continue ')) {
+        if ($domain == 'exit') {
+            writebox('Canceled, nothing was written', 'red');
+            return;
+        }
+        if ($domain) {
+            $domains[] = $domain;
+        }
+        writeln('');
+    };
+    $sslDomains = implode("\n", $domains);
+    run("echo '$sslDomains' >> /var/www/letsencrypt/domains.txt");
+    writebox("<strong>Following entries are added:</strong><br><br>$sslDomains", 'green');
+})->setPrivate()->shallow()->onRoles('Installation');
+
+desc('Requested the SSl certificte');
+task('domain:ssl:request', function () {
+    run('sudo dehydrated -c');
+})->onRoles('Installation');
+
+desc("Add Let's Encrypt SSL certificte");
+task('domain:ssl', [
+    'domain:ssl:domain',
+    'domain:ssl:write',
+    'domain:ssl:request'
+])->shallow();
+
 task('domain:force:ask', function () {
     if (askConfirmation(' Do you want to force a specific domain? ', true)) {
         $realHostname = getRealHostname();
