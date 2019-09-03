@@ -179,27 +179,25 @@ after every entry if you wand to add another domain.
 <strong>Current entry:</strong>
 $currentEntry
 
-To cancel enter <strong>exit</strong> as answer
-");
-    $firstDomain = ask(' Please enter the domain ', "{$GLOBALS['domain']} www.{$GLOBALS['domain']}");
+To cancel enter <strong>exit</strong> as answer");
+
+    $firstDomain = askDomain('Please enter the domain', "{$GLOBALS['domain']} www.{$GLOBALS['domain']}");
     if ($firstDomain == 'exit') {
-        writebox('Canceled, nothing was written', 'red');
         return;
     }
     $domains = [
         $firstDomain
     ];
     writeln('');
-    while ($domain = ask(' Please add another the domain or press enter to continue ')) {
+    while ($domain = askDomain('Please enter another domain or press enter to continue')) {
         if ($domain == 'exit') {
-            writebox('Canceled, nothing was written', 'red');
             return;
         }
         if ($domain) {
             $domains[] = $domain;
         }
         writeln('');
-    };
+    }
     $sslDomains = implode("\n", $domains);
     run("echo '$sslDomains' >> /var/www/letsencrypt/domains.txt");
     writebox("<strong>Following entries are added:</strong><br><br>$sslDomains", 'green');
@@ -220,46 +218,48 @@ task('domain:ssl', [
 task('domain:force:ask', function () {
     if (askConfirmation(' Do you want to force a specific domain? ', true)) {
         $realHostname = getRealHostname();
-        $GLOBALS['domain'] = ask(' Please enter the domain ', "www.{$realHostname}");
+        $GLOBALS['domain'] = askDomain('Please enter the domain', "www.{$realHostname}", ["www.{$realHostname}", $realHostname]);
     }
 })->setPrivate()->shallow()->onRoles('Production');
 
 task('domain:force:write', function () {
-    if (isset($GLOBALS['domain'])) {
-        $confFile = '/usr/local/etc/nginx/vhosts/ssl.conf';
-
-        // Count entries. If there are more than two entries we just overwrite the domain
-        $numberOfEntries = intval(str_replace(' ', '', run("cat $confFile | grep -c 'server {'")));
-        if ($numberOfEntries > 2) {
-            writebox("There is already a domain defined. I'll overwrite the domain");
-            $fileContent = run("cat $confFile");
-            // Replace redirections
-            $fileContent = preg_replace('/^([ ]*return \d{3}) https:\/\/(.+)\$request_uri;$/m', "$1 https://{$GLOBALS['domain']}\$request_uri;", $fileContent);
-            // Replace server names
-            $fileContent = preg_replace('/^([ ]*server_name) ((?!\.proserver\.punkt\.de).)*$/m', "$1 {$GLOBALS['domain']};", $fileContent);
-            // Overwrite the file
-            run("echo '{$fileContent}' > {$confFile}");
-            return;
-        }
-
-        $redirectString = "  location / {\n    return 301 https://{$GLOBALS['domain']}\$request_uri;\n  }";
-        $firstLinenummerSecondEntry = run("cat $confFile | grep -n 'server {' | cut -d: -f 1 | tail -1");
-        $lastLinenummerFirstEntry = intval($firstLinenummerSecondEntry) - 1;
-
-        $firstEntry = run("head -{$lastLinenummerFirstEntry} $confFile");
-        $secondEntry = run("tail -{$firstLinenummerSecondEntry} $confFile");
-
-        // Genereate the 3 server sections
-        $httpRedirectEntry = str_replace('$host', $GLOBALS['domain'], $firstEntry);
-        $httpsRedirectEntry = preg_replace('/^\s*include\s(.)+$\n/m', '', $secondEntry);
-        $httpsRedirectEntry = str_replace('}', "\n$redirectString\n}", $httpsRedirectEntry);
-        $httpsEntry = str_replace(' default_server', '', $secondEntry);
-        $httpsEntry = preg_replace('/server_name (.)+$/m', "server_name {$GLOBALS['domain']};", $httpsEntry);
-
-        // Overwrite the file
-        $fileContent = "{$httpRedirectEntry}\n{$httpsRedirectEntry}\n{$httpsEntry}";
-        run("echo '{$fileContent}' > {$confFile}");
+    if (!isset($GLOBALS['domain']) || $GLOBALS['domain'] == 'exit') {
+        return;
     }
+
+    $confFile = '/usr/local/etc/nginx/vhosts/ssl.conf';
+
+    // Count entries. If there are more than two entries we just overwrite the domain
+    $numberOfEntries = intval(str_replace(' ', '', run("cat $confFile | grep -c 'server {'")));
+    if ($numberOfEntries > 2) {
+        writebox("There is already a domain defined. I'll overwrite the domain");
+        $fileContent = run("cat $confFile");
+        // Replace redirections
+        $fileContent = preg_replace('/^([ ]*return \d{3}) https:\/\/(.+)\$request_uri;$/m', "$1 https://{$GLOBALS['domain']}\$request_uri;", $fileContent);
+        // Replace server names
+        $fileContent = preg_replace('/^([ ]*server_name) ((?!\.proserver\.punkt\.de).)*$/m', "$1 {$GLOBALS['domain']};", $fileContent);
+        // Overwrite the file
+        run("echo '{$fileContent}' > {$confFile}");
+        return;
+    }
+
+    $redirectString = "  location / {\n    return 301 https://{$GLOBALS['domain']}\$request_uri;\n  }";
+    $firstLinenummerSecondEntry = run("cat $confFile | grep -n 'server {' | cut -d: -f 1 | tail -1");
+    $lastLinenummerFirstEntry = intval($firstLinenummerSecondEntry) - 1;
+
+    $firstEntry = run("head -{$lastLinenummerFirstEntry} $confFile");
+    $secondEntry = run("tail -{$firstLinenummerSecondEntry} $confFile");
+
+    // Genereate the 3 server sections
+    $httpRedirectEntry = str_replace('$host', $GLOBALS['domain'], $firstEntry);
+    $httpsRedirectEntry = preg_replace('/^\s*include\s(.)+$\n/m', '', $secondEntry);
+    $httpsRedirectEntry = str_replace('}', "\n$redirectString\n}", $httpsRedirectEntry);
+    $httpsEntry = str_replace(' default_server', '', $secondEntry);
+    $httpsEntry = preg_replace('/server_name (.)+$/m', "server_name {$GLOBALS['domain']};", $httpsEntry);
+
+    // Overwrite the file
+    $fileContent = "{$httpRedirectEntry}\n{$httpsRedirectEntry}\n{$httpsEntry}";
+    run("echo '{$fileContent}' > {$confFile}");
 })->setPrivate()->shallow()->onRoles('Installation');
 
 desc('Configure the server to force a specific domain');

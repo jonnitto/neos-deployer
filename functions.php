@@ -148,3 +148,16 @@ function writebox($content, $bg = 'blue', $color = "white")
     writeln("<bg={$bg}>    {$placeholder}    </>");
     writeln('');
 }
+
+function askDomain(string $text, $default = null, $suggestedChoices = null)
+{
+    $domain = ask(" $text ", $default, $suggestedChoices);
+    if ($domain == 'exit') {
+        writebox('Canceled, nothing was written', 'red');
+        return 'exit';
+    }
+    if ($domain) {
+        return $domain;
+    }
+    return false;
+}
