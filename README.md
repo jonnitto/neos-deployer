@@ -4,6 +4,14 @@ You can look at the [examples](examples) folder to look how to set up a deployme
 The files should be saved on the root of you project. In the `deploy.yaml` file you will
 find explanations for all the available settings.
 
+## Installation
+
+Enter this on the root of your project:
+
+```bash
+composer require --dev jonnitto/neos-deployer
+```
+
 ## Hoster
 
 Currently, there are settings for these hoster:
