@@ -78,6 +78,7 @@ foreach ([
     'shared',
     'symlink',
     'update_code',
+    'vendors',
     'writable'
 ] as $task) {
     task("deploy:{$task}")->setPrivate();
@@ -140,6 +141,7 @@ task('install:output_db', function () {
 task('install:success', function () {
     writebox('<strong>Successfully installed!</strong><br>To deploy your site in the future, simply run <strong>dep deploy</strong>', 'green');
 })->shallow()->setPrivate();
+
 
 desc('Build frontend files and push them to git');
 task('frontend', function () {
