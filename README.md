@@ -16,7 +16,7 @@ composer require --dev jonnitto/neos-deployer
 
 Currently, there are settings for these hoster:
 
-- proServer from punkt.de
+- [proServer from punkt.de](documentation/proServer.md)
 - Uberspace
 
 ## Comands for every hoster
