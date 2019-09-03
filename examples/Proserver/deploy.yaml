@@ -1,8 +1,7 @@
 # Install: dep install
 # Deploy: dep deploy
 
-.base: &base
-  # Put here the hostname
+.base: &base # Put here the hostname
   hostname: vpro__XXXX__.proserver.punkt.de
 
   # Put here the username
@@ -62,4 +61,3 @@ installHost:
   <<: *base
   become: root
   roles: Installation
-  slack_webhook: false
