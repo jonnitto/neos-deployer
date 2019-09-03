@@ -164,22 +164,35 @@ task('install:redis', function () {
 })->setPrivate()->onRoles('Installation');
 
 
-task('domain:force:ask', function() {
+task('domain:force:ask', function () {
     if (askConfirmation(' Do you want to force a specific domain? ', true)) {
         $realHostname = getRealHostname();
         $GLOBALS['domain'] = ask(' Please enter the domain ', "www.{$realHostname}");
     }
 })->setPrivate()->shallow()->onRoles('Production');
 
-task('domain:force:write', function() {
+task('domain:force:write', function () {
     if (isset($GLOBALS['domain'])) {
         $confFile = '/usr/local/etc/nginx/vhosts/ssl.conf';
 
-        $redirectString = "  location / {\n    return 301 https://{$GLOBALS['domain']}\$request_uri;\n  }";
+        // Count entries. If there are more than two entries we just overwrite the domain
+        $numberOfEntries = intval(str_replace(' ', '', run("cat $confFile | grep -c 'server {'")));
+        if ($numberOfEntries > 2) {
+            writebox("There is already a domain defined. I'll overwrite the domain");
+            $fileContent = run("cat $confFile");
+            // Replace redirections
+            $fileContent = preg_replace('/^([ ]*return \d{3}) https:\/\/(.+)\$request_uri;$/m', "$1 https://{$GLOBALS['domain']}\$request_uri;", $fileContent);
+            // Replace server names
+            $fileContent = preg_replace('/^([ ]*server_name) ((?!\.proserver\.punkt\.de).)*$/m', "$1 {$GLOBALS['domain']};", $fileContent);
+            // Overwrite the file
+            run("echo '{$fileContent}' > {$confFile}");
+            return;
+        }
 
+        $redirectString = "  location / {\n    return 301 https://{$GLOBALS['domain']}\$request_uri;\n  }";
         $firstLinenummerSecondEntry = run("cat $confFile | grep -n 'server {' | cut -d: -f 1 | tail -1");
         $lastLinenummerFirstEntry = intval($firstLinenummerSecondEntry) - 1;
-        
+
         $firstEntry = run("head -{$lastLinenummerFirstEntry} $confFile");
         $secondEntry = run("tail -{$firstLinenummerSecondEntry} $confFile");
 
