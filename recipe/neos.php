@@ -139,7 +139,8 @@ task('install:output_db', function () {
 
 
 task('install:success', function () {
-    writebox('<strong>Successfully installed!</strong><br>To deploy your site in the future, simply run <strong>dep deploy</strong>', 'green');
+    $stage = has('stage') ? ' {{stage}}' : '';
+    writebox("<strong>Successfully installed!</strong><br>To deploy your site in the future, simply run <strong>dep deploy$stage</strong>", 'green');
 })->shallow()->setPrivate();
 
 
