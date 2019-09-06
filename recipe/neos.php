@@ -184,6 +184,12 @@ task('frontend', function () {
 })->once();
 
 
+desc('Repair inconsistent nodes in the content repository');
+task('node:repair', function () {
+    run('FLOW_CONTEXT={{flow_context}} {{bin/php}} -d memory_limit=8G {{release_path}}/{{flow_command}} node:repair', ['timeout' => null, 'tty' => true]);
+})->shallow();
+
+
 desc('Create release tag on git');
 task('deploy:tag', function () {
     // Set timestamps tag
