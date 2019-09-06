@@ -18,7 +18,13 @@ require_once 'Packages/Libraries/jonnitto/neos-deployer/recipe/proserver.php';
 inventory('deploy.yaml');
 ```
 
-Create `deploy.yaml` with following content:
+Create `deploy.yaml` with following content and edit it following points:
+
+- Replace `vpro__XXXX__` with the corresponding username
+- Replace `__OWNER__/__REPOSITORY` with the corresponding repository
+- Add the `slack_webhook`. You can register it [here](https://slack.com/oauth/authorize?&client_id=113734341365.225973502034&scope=incoming-webhook)
+- If needed set `flow_context`. Defaults to `Production/Live`
+- Replace `domain.tld` with the corresponding domain, **without** `www.`
 
 ```yaml
 # Install: dep install
@@ -27,7 +33,7 @@ Create `deploy.yaml` with following content:
 .base: &base
   hostname: vpro__XXXX__.proserver.punkt.de
   user: vpro__XXXX__
-  repository: git@github.com:jonnitto/__REPOSITORY__.git
+  repository: git@github.com:__OWNER__/__REPOSITORY__.git
   slack_webhook: https://hooks.slack.com/services/__YOUR/SLACK/WEBHOOK__
 
   # Add which caches should be flushed on deployment.
@@ -51,25 +57,19 @@ Create `deploy.yaml` with following content:
 domain.tld:
   <<: *base
   user: proserver
-  roles: Production
+  roles: Proserver
 
-installHost:
+root:
   <<: *base
   become: root
-  roles: Installation
+  roles: Root
 ```
-
-- Replace `vpro__XXXX__` with the corresponding username
-- Replace `__REPOSITORY__` with the corresponding repository
-- Add the `slack_webhook`. You can register it [here](https://slack.com/oauth/authorize?&client_id=113734341365.225973502034&scope=incoming-webhook)
-- If needed set `flow_context`. Defaults to `Production/Live`
-- Replace `domain.tld` with the corresponding domain, **without** `www.`
 
 ## 3. Start installation
 
 Enter `dep install` and follow the screen instructions
 
-## 4. Furhter steps
+## 4. Further steps
 
 For a list of all available commands enter `dep` in the command line
 
