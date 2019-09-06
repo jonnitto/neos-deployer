@@ -36,41 +36,44 @@ task('install', [
     'install:output_db'
 ])->shallow();
 
-$roleProductionTasks = [
+$roleProserverTasks = [
     'cleanup',
+    'deploy:flush_caches',
     'deploy:info',
     'deploy:lock',
     'deploy:prepare',
     'deploy:publish_resources',
     'deploy:release',
-    'deploy:run_migrations',
     'deploy:remove_robotstxt',
+    'deploy:run_migrations',
     'deploy:symlink',
     'deploy:unlock',
     'deploy:update_code',
     'deploy:vendors',
     'deploy:writable',
+    'frontend',
     'install:check',
+    'install:import',
     'install:info',
     'install:output_db',
     'install:success',
     'install:wait',
-    'ssh:key',
-    'deploy:flush_caches',
-    'slack:notify',
-    'slack:notify:success',
+    'node:migrate',
+    'node:repair',
     'slack:notify:failure',
-    'frontend'
+    'slack:notify:success',
+    'slack:notify',
+    'ssh:key'
 ];
-foreach ($roleProductionTasks as $task) {
-    task($task)->onRoles('Production');
+foreach ($roleProserverTasks as $task) {
+    task($task)->onRoles('Proserver');
 }
 
-$roleInstallationTasks = [
+$roleRootTasks = [
     'install:create_database'
 ];
-foreach ($roleInstallationTasks as $task) {
-    task($task)->onRoles('Installation');
+foreach ($roleRootTasks as $task) {
+    task($task)->onRoles('Root');
 }
 
 
@@ -78,13 +81,13 @@ desc('Create a tunnel connection via localhost with the web user');
 task('tunnel:web', function () {
     writebox('To close the tunnel, enter <strong>exit</strong> in the console');
     runLocally('ssh -L 2222:127.0.0.1:22 -J jumping@ssh-jumphost.karlsruhe.punkt.de {{user}}@{{hostname}}', ['timeout' => null, 'tty' => true]);
-})->onRoles('Production');
+})->onRoles('Proserver');
 
 desc('Create a tunnel connection via localhost with the root user');
 task('tunnel:root', function () {
     writebox('To close the tunnel, enter <strong>exit</strong> in the console');
     runLocally('ssh -L 2222:127.0.0.1:22 -J jumping@ssh-jumphost.karlsruhe.punkt.de {{user}}@{{hostname}}', ['timeout' => null, 'tty' => true]);
-})->onRoles('Installation');
+})->onRoles('Root');
 
 
 task('install:set_globals', function () {
@@ -92,14 +95,14 @@ task('install:set_globals', function () {
     $GLOBALS['dbName'] = parse("{{user}}_neos{$stage}");
     $GLOBALS['dbUser'] = 'root';
     $GLOBALS['dbPassword'] = run('sudo cat /usr/local/etc/mysql-password');
-})->shallow()->setPrivate()->onRoles('Installation');
+})->shallow()->setPrivate()->onRoles('Root');
 
 
 task('install:set_credentials', function () {
     set('dbName', $GLOBALS['dbName']);
     set('dbUser', $GLOBALS['dbUser']);
     set('dbPassword', $GLOBALS['dbPassword']);
-})->shallow()->setPrivate()->onRoles('Production');
+})->shallow()->setPrivate();
 
 
 task('install:settings', function () {
@@ -124,7 +127,7 @@ Neos: &settings
 TYPO3: *settings
 __EOF__
 ');
-})->setPrivate()->onRoles('Production');
+})->setPrivate()->onRoles('Proserver');
 
 
 task('install:import_database', function () {
@@ -139,7 +142,7 @@ task('install:import_database', function () {
         );
         dbRemoveLocalDump();
     }
-})->setPrivate()->onRoles('Production');
+})->setPrivate()->onRoles('Proserver');
 
 
 task('install:import_resources', function () {
@@ -149,7 +152,7 @@ task('install:import_resources', function () {
         resourcesDecompress(parse('{{deploy_path}}/shared'));
         resourcesRepairPermissions();
     }
-})->setPrivate()->onRoles('Production');
+})->setPrivate()->onRoles('Proserver');
 
 
 task('install:redis', function () {
@@ -160,12 +163,12 @@ task('install:redis', function () {
     if (!test('grep -sFq "/usr/local/bin/redis-cli flushall" /etc/rc.local')) {
         run("sudo echo '/usr/local/bin/redis-cli flushall' >> /etc/rc.local");
     }
-})->setPrivate()->onRoles('Installation');
+})->setPrivate()->onRoles('Root');
 
 
 task('domain:ssl:domain', function () {
     $GLOBALS['domain'] = getRealHostname();
-})->setPrivate()->shallow()->onRoles('Production');
+})->setPrivate()->shallow()->onRoles('Proserver');
 
 task('domain:ssl:write', function () {
     $file = '/var/www/letsencrypt/domains.txt';
@@ -200,12 +203,12 @@ To cancel enter <strong>exit</strong> as answer");
     $sslDomains = implode("\n", $domains);
     run("echo '$sslDomains' >> /var/www/letsencrypt/domains.txt");
     writebox("<strong>Following entries are added:</strong><br><br>$sslDomains", 'green');
-})->setPrivate()->shallow()->onRoles('Installation');
+})->setPrivate()->shallow()->onRoles('Root');
 
 desc('Requested the SSl certificte');
 task('domain:ssl:request', function () {
     run('sudo dehydrated -c');
-})->onRoles('Installation');
+})->onRoles('Root');
 
 desc("Add Let's Encrypt SSL certificte");
 task('domain:ssl', [
@@ -219,7 +222,7 @@ task('domain:force:ask', function () {
         $realHostname = getRealHostname();
         $GLOBALS['domain'] = askDomain('Please enter the domain', "www.{$realHostname}", ["www.{$realHostname}", $realHostname]);
     }
-})->setPrivate()->shallow()->onRoles('Production');
+})->setPrivate()->shallow()->onRoles('Proserver');
 
 task('domain:force:write', function () {
     if (!isset($GLOBALS['domain']) || $GLOBALS['domain'] == 'exit') {
@@ -259,7 +262,7 @@ task('domain:force:write', function () {
     // Overwrite the file
     $fileContent = "{$httpRedirectEntry}\n{$httpsRedirectEntry}\n{$httpsEntry}";
     run("echo '{$fileContent}' > {$confFile}");
-})->setPrivate()->shallow()->onRoles('Installation');
+})->setPrivate()->shallow()->onRoles('Root');
 
 desc('Configure the server to force a specific domain');
 task('domain:force', [
@@ -276,19 +279,19 @@ task('install:nginx', function () {
     if (!test("grep -sFq 'FLOW_CONTEXT {{flow_context}}' $neosConfFile")) {
         run("sudo sed -i conf 's%FLOW_CONTEXT Production%FLOW_CONTEXT {{flow_context}}%' $neosConfFile");
     }
-})->setPrivate()->onRoles('Installation');
+})->setPrivate()->onRoles('Root');
 
 
 desc('Restart nginx');
 task('restart:nginx', function () {
     run('sudo service nginx reload');
-})->onRoles('Installation');
+})->onRoles('Root');
 
 
 desc('Restart PHP');
 task('restart:php', function () {
     run('sudo service php-fpm reload');
-})->onRoles('Installation');
+})->onRoles('Root');
 after('deploy:symlink', 'restart:php');
 
 
