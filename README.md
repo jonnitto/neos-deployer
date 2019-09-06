@@ -25,21 +25,22 @@ Run these taks with `dep COMMAND`. If you want to list all commands, enter `dep`
 
 **Most important commands:**
 
-| Command                    | Description                               |
-| -------------------------- | ----------------------------------------- |
-| `deploy`                   | Deploy your project                       |
-| `frontend`                 | Build frontend files and push them to git |
-| `install`                  | Initialize installation                   |
-| `rollback`                 | Rollback to previous release              |
-| `ssh`                      | Connect to host through ssh               |
-| `ssh:key`                  | Create and/or read the deployment key     |
-| `deploy:publish_resources` | Publish resources                         |
-| `deploy:run_migrations`    | Apply database migrations                 |
-| `deploy:tag`               | Create release tag on git                 |
-| `deploy:unlock`            | Unlock deploy                             |
-| `config:current`           | Show current paths                        |
-| `config:dump`              | Print host configuration                  |
-| `config:hosts`             | Print all hosts                           |
+| Command                    | Description                                         |
+| -------------------------- | --------------------------------------------------- |
+| `deploy`                   | Deploy your project                                 |
+| `frontend`                 | Build frontend files and push them to git           |
+| `install`                  | Initialize installation                             |
+| `install:import`           | Import your local database and persistent resources |
+| `rollback`                 | Rollback to previous release                        |
+| `ssh`                      | Connect to host through ssh                         |
+| `ssh:key`                  | Create and/or read the deployment key               |
+| `deploy:publish_resources` | Publish resources                                   |
+| `deploy:run_migrations`    | Apply database migrations                           |
+| `deploy:tag`               | Create release tag on git                           |
+| `deploy:unlock`            | Unlock deploy                                       |
+| `config:current`           | Show current paths                                  |
+| `config:dump`              | Print host configuration                            |
+| `config:hosts`             | Print all hosts                                     |
 
 ## proServer
 

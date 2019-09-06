@@ -104,6 +104,13 @@ task('install:bash', function () {
 })->shallow();
 
 
+desc('Import your local database and persistent resources');
+task('install:import', [
+    'install:import_database',
+    'install:import_resources'
+]);
+
+
 task('install:info', function () {
     $realHostname = getRealHostname();
     writebox("✈︎ Installing <strong>$realHostname</strong> on <strong>{{hostname}}</strong>");
