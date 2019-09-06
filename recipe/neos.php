@@ -181,7 +181,7 @@ task('frontend', function () {
             runLocally('git push');
         }
     }
-});
+})->once();
 
 
 desc('Create release tag on git');
@@ -195,7 +195,7 @@ task('deploy:tag', function () {
         'git tag -a -m "Deployment on the {{day}} at {{time}}" "{{tag}}"'
     );
     runLocally('git push origin --tags');
-});
+})->once();
 
 
 after('deploy:failed', 'deploy:unlock');
