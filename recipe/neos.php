@@ -190,6 +190,20 @@ task('node:repair', function () {
 })->shallow();
 
 
+desc('List and run node migrations');
+task('node:migrate', function () {
+    $output = run('FLOW_CONTEXT={{flow_context}} {{bin/php}} -d memory_limit=8G {{release_path}}/{{flow_command}} node:migrationstatus', ['timeout' => null]);
+    writeln($output);
+    writeln('');
+    while ($version = ask(' Please enter the version number of the migration you want to run. To finish the command, press enter ')) {
+        writebox("Run migration <strong>$version</strong>");
+        run("FLOW_CONTEXT={{flow_context}} {{bin/php}} -d memory_limit=8G {{release_path}}/{{flow_command}} node:migrate --version $version", ['timeout' => null]);
+        writeln('');
+    }
+    writeln('');
+})->shallow();
+
+
 desc('Create release tag on git');
 task('deploy:tag', function () {
     // Set timestamps tag
