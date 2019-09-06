@@ -5,7 +5,7 @@ namespace Deployer;
 require_once 'neos.php';
 
 set('html_path', '/var/www/virtual/{{user}}');
-set('deploy_path', '/var/www/virtual/{{user}}/Neos');
+set('deploy_path', '/var/www/virtual/{{user}}/{{deploy_folder}}');
 
 
 desc('Initialize installation on Uberspace');
@@ -105,7 +105,6 @@ task('restart:php', function () {
     run('uberspace tools restart php');
 });
 after('deploy:symlink', 'restart:php');
-
 
 
 desc('Add a domain to uberspace');

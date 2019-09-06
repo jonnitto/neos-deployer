@@ -34,6 +34,9 @@
   # Set the flow context, defaults to Production/Live
   flow_context: Production
 
+  # Set here the subfolder for the deployment, defaults to Neos
+  deploy_folder: Neos/Subfolder
+
   frontend:
     # Add here the command who builds the frontend files, defaults to 'yarn pipeline'
     command: 'yarn pipeline'
@@ -55,9 +58,9 @@
 domain.tld:
   <<: *base
   user: proserver
-  roles: Production
+  roles: Proserver
 
-installHost:
+root:
   <<: *base
   become: root
-  roles: Installation
+  roles: Root

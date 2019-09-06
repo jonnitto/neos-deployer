@@ -4,7 +4,7 @@ namespace Deployer;
 
 require_once 'neos.php';
 
-set('deploy_path', '/var/www/Neos');
+set('deploy_path', '/var/www/{{deploy_folder}}');
 
 desc('Initialize installation on proserver.punkt.de');
 task('install', [
