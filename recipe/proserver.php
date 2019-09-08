@@ -64,7 +64,8 @@ $roleProserverTasks = [
     'slack:notify:failure',
     'slack:notify:success',
     'slack:notify',
-    'ssh:key'
+    'ssh:key',
+    'user:create_admin'
 ];
 foreach ($roleProserverTasks as $task) {
     task($task)->onRoles('Proserver');

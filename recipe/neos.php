@@ -226,6 +226,16 @@ task('deploy:tag', function () {
 })->once();
 
 
+desc('Create a new administrator');
+task('user:create_admin', function () {
+    $username = ask(' Please enter the username ');
+    $password = askHiddenResponse(' Please enter the password ');
+    $firstName = ask(' Please enter the first name ');
+    $lastName = ask(' Please enter the last name ');
+    run("FLOW_CONTEXT={{flow_context}} {{bin/php}} {{release_path}}/{{flow_command}} flow user:create --roles Administrator $username $password $firstName $lastName");
+})->shallow();
+
+
 desc('Import the site from the Site package');
 task('site:import', function () {
     cd('{{release_path}}/DistributionPackages');
