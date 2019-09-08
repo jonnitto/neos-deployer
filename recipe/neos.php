@@ -226,6 +226,29 @@ task('deploy:tag', function () {
 })->once();
 
 
+desc('Import the site from the Site package');
+task('site:import', function () {
+    cd('{{release_path}}/DistributionPackages');
+    $packages = run("ls -d */ | cut -f1 -d'/'");
+
+    if (!$packages) {
+        writebox('No packages found', 'red');
+        return;
+    }
+
+    $packagesArray = preg_split('/\n/i', $packages);
+    $package = $packagesArray[0];
+
+    if (count($packagesArray) > 1) {
+        $package = askChoice(' Please choose the package with the content you want to import ', $packagesArray);
+    }
+
+    writebox("Import the content from <strong>$package</strong>");
+    run("FLOW_CONTEXT={{flow_context}} {{bin/php}} {{release_path}}/{{flow_command}} site:import --package-key $package", ['timeout' => null, 'tty' => true]);
+})->shallow();
+
+
+
 after('deploy:failed', 'deploy:unlock');
 
 // Execute flow publish resources after a rollback (path differs, because release_path is the old one here)

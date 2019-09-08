@@ -60,6 +60,7 @@ $roleProserverTasks = [
     'install:wait',
     'node:migrate',
     'node:repair',
+    'site:import',
     'slack:notify:failure',
     'slack:notify:success',
     'slack:notify',
