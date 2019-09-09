@@ -264,7 +264,6 @@ task('site:import', function () {
 })->shallow();
 
 
-
 after('deploy:failed', 'deploy:unlock');
 
 // Execute flow publish resources after a rollback (path differs, because release_path is the old one here)
