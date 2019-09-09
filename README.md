@@ -41,6 +41,10 @@ Run these taks with `dep COMMAND`. If you want to list all commands, enter `dep`
 | `config:current`           | Show current paths                                  |
 | `config:dump`              | Print host configuration                            |
 | `config:hosts`             | Print all hosts                                     |
+| `node:repair`              | Repair inconsistent nodes in the content repository |
+| `node:migrate`             | List and run node migrations                        |
+| `site:import`              | Import the site from the a package with a xml file  |
+| `user:create_admin`        | Create a new administrator                          |
 
 ## proServer
 
