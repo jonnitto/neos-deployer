@@ -236,9 +236,15 @@ task('user:create_admin', function () {
 })->shallow();
 
 
-desc('Import the site from the Site package');
+desc('Import the site from the a package with a xml file');
 task('site:import', function () {
-    cd('{{release_path}}/DistributionPackages');
+    $path = '{{release_path}}/DistributionPackages';
+    if (test("[ -d $path ]")) {
+        cd($path);
+    } else {
+        cd('{{release_path}}/Packages/Sites');
+    }
+
     $packages = run("ls -d */ | cut -f1 -d'/'");
 
     if (!$packages) {
