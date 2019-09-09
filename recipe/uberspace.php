@@ -36,7 +36,7 @@ task('install', [
     'install:output_db'
 ]);
 
-task('install:set_credentials', function () {
+task('install:php_settings', function () {
     run('echo "memory_limit = 1024M" > ~/etc/php.d/memory_limit.ini');
 })->shallow()->setPrivate();
 
