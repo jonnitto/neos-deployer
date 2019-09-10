@@ -6,8 +6,12 @@ require_once 'recipe/flow_framework.php';
 require_once 'Packages/Libraries/deployer/recipes/recipe/slack.php';
 require_once __DIR__ . '/../functions.php';
 
-set('flow_context', get('flow_context', 'Production/Live'));
-set('deploy_folder', get('deploy_folder', 'Neos'));
+set('deploy_folder', 'Neos');
+set('sub_context', 'Live');
+set('flow_context', function () {
+    $array = array_filter(['Production', get('sub_context')]);
+    return implode('/', $array);
+});
 
 set('bash_sync', 'https://raw.githubusercontent.com/jonnitto/bash/master/bash.sh');
 

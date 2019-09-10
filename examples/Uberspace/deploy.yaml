@@ -35,7 +35,13 @@ neos-site.com:
   removeRobotsTxt: true
 
   # Set the flow context, defaults to Production/Live
+  # (In combination with sub_context)
+  # If this is set the sub_context will be ignored
   flow_context: Production
+
+  # Set the flow sub context of Production, defaults to Live
+  # If you set this to e.g. Test the FLOW_CONTEXT will be Production/Test
+  sub_context: Live
 
   # Set here the subfolder for the deployment, defaults to Neos
   deploy_folder: Neos/Subfolder
