@@ -15,7 +15,7 @@ task('install', [
     'ssh:key',
     'install:wait',
     'install:php_settings',
-    'deploy:restart_php',
+    'restart:php',
     'deploy:prepare',
     'deploy:lock',
     'deploy:release',
