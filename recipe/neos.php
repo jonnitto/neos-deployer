@@ -236,7 +236,7 @@ task('user:create_admin', function () {
     $password = askHiddenResponse(' Please enter the password ');
     $firstName = ask(' Please enter the first name ');
     $lastName = ask(' Please enter the last name ');
-    run("FLOW_CONTEXT={{flow_context}} {{bin/php}} {{release_path}}/{{flow_command}} flow user:create --roles Administrator $username $password $firstName $lastName");
+    run("FLOW_CONTEXT={{flow_context}} {{bin/php}} {{release_path}}/{{flow_command}} user:create --roles Administrator $username $password $firstName $lastName");
 })->shallow();
 
 
