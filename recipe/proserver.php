@@ -33,7 +33,8 @@ task('install', [
     'restart:nginx',
     'deploy:unlock',
     'install:success',
-    'install:output_db'
+    'install:output_db',
+    'domain:dns'
 ])->shallow();
 
 $roleProserverTasks = [
@@ -166,6 +167,19 @@ task('install:redis', function () {
         run("sudo echo '/usr/local/bin/redis-cli flushall' >> /etc/rc.local");
     }
 })->setPrivate()->onRoles('Root');
+
+desc('Output the IP addresses for the host');
+task('domain:dns', function () {
+    $ipv4 = runLocally('dig +short {{hostname}}');
+    $IPv6 = run('ifconfig epair0b | grep inet | grep -v fe80 | cut -w -f3');
+    outputTable(
+        'Following DNS records need to be set:',
+        [
+            'A' => $ipv4,
+            'AAAA' => $IPv6
+        ]
+    );
+})->shallow()->onRoles('Proserver');
 
 
 task('domain:ssl:domain', function () {
