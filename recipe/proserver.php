@@ -188,7 +188,8 @@ task('domain:ssl:domain', function () {
 
 task('domain:ssl:write', function () {
     $file = '/var/www/letsencrypt/domains.txt';
-    $currentEntry = run("cat $file");
+    $domainsString = cleanUpWhitespaces(run("cat $file"));
+    $currentEntry = preg_replace('/\s+/', "\n", $domainsString);
 
     writebox("<strong>Add Let's Encrypt SSL certificte</strong>
 If you have multiple domains, you will be asked
@@ -206,6 +207,7 @@ To cancel enter <strong>exit</strong> as answer");
     $domains = [
         $firstDomain
     ];
+
     writeln('');
     while ($domain = askDomain('Please enter another domain or press enter to continue')) {
         if ($domain == 'exit') {
@@ -216,9 +218,10 @@ To cancel enter <strong>exit</strong> as answer");
         }
         writeln('');
     }
-    $sslDomains = implode("\n", $domains);
-    run("echo '$sslDomains' >> /var/www/letsencrypt/domains.txt");
-    writebox("<strong>Following entries are added:</strong><br><br>$sslDomains", 'green');
+    $newDomains = implode(" ", $domains);
+    $newEntries = preg_replace('/\s+/', "\n", $newDomains);
+    run("echo '$domainsString $newDomains' > /var/www/letsencrypt/domains.txt");
+    writebox("<strong>Following entries are added:</strong><br><br>$newEntries", 'green');
 })->setPrivate()->shallow()->onRoles('Root');
 
 desc('Requested the SSl certificte');
@@ -284,6 +287,7 @@ desc('Configure the server to force a specific domain');
 task('domain:force', [
     'domain:force:ask',
     'domain:force:write',
+    'domain:dns',
     'restart:nginx'
 ])->shallow();
 

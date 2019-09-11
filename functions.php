@@ -149,9 +149,17 @@ function writebox($content, $bg = 'blue', $color = "white")
     writeln('');
 }
 
+function cleanUpWhitespaces($string)
+{
+    if (!$string) {
+        return null;
+    }
+    return preg_replace('/\s+/', ' ', trim($string));
+}
+
 function askDomain(string $text, $default = null, $suggestedChoices = null)
 {
-    $domain = ask(" $text ", $default, $suggestedChoices);
+    $domain = cleanUpWhitespaces(ask(" $text ", $default, $suggestedChoices));
     if ($domain == 'exit') {
         writebox('Canceled, nothing was written', 'red');
         return 'exit';
