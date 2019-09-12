@@ -52,6 +52,7 @@ $roleProserverTasks = [
     'deploy:update_code',
     'deploy:vendors',
     'deploy:writable',
+    'edit:settings',
     'frontend',
     'install:check',
     'install:import',

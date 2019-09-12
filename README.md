@@ -46,6 +46,7 @@ Run these taks with `dep COMMAND`. If you want to list all commands, enter `dep`
 | `site:import`              | Import the site from the a package with a xml file  |
 | `user:create_admin`        | Create a new administrator                          |
 | `edit:cronjob`             | Edit the cronjobs                                   |
+| `edit:settings`            | Edit the Neos Settings.yaml file                    |
 
 ## proServer
 

@@ -268,6 +268,12 @@ task('site:import', function () {
 })->shallow();
 
 
+desc('Edit the Neos Settings.yaml file');
+task('edit:settings', function () {
+    run('nano {{release_path}}/Configuration/Settings.yaml', ['timeout' => null, 'tty' => true]);
+})->shallow();
+
+
 after('deploy:failed', 'deploy:unlock');
 
 // Execute flow publish resources after a rollback (path differs, because release_path is the old one here)
