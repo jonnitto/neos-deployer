@@ -314,6 +314,12 @@ task('restart:php', function () {
 after('deploy:symlink', 'restart:php');
 
 
+desc('Edit the cronjobs');
+task('edit:cronjob', function () {
+    run('sudo crontab -u root -e', ['timeout' => null, 'tty' => true]);
+})->shallow()->onRoles('Root');
+
+
 function punktDeUpload(string $file, string $path)
 {
     runLocally("scp -o ProxyJump=jumping@ssh-jumphost.karlsruhe.punkt.de $file proserver@{{hostname}}:{$path}", ['timeout' => null]);

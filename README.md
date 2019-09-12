@@ -45,6 +45,7 @@ Run these taks with `dep COMMAND`. If you want to list all commands, enter `dep`
 | `node:migrate`             | List and run node migrations                        |
 | `site:import`              | Import the site from the a package with a xml file  |
 | `user:create_admin`        | Create a new administrator                          |
+| `edit:cronjob`             | Edit the cronjobs                                   |
 
 ## proServer
 

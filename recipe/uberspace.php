@@ -201,3 +201,9 @@ task('php:version:ask', function () {
     $output = run("uberspace tools version use php $version");
     writebox($output, 'green');
 })->shallow()->setPrivate();
+
+
+desc('Edit the cronjobs');
+task('edit:cronjob', function () {
+    run('crontab -e', ['timeout' => null, 'tty' => true]);
+})->shallow();
