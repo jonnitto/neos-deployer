@@ -42,6 +42,7 @@ task('deploy:remove_robotstxt', function () {
 })->setPrivate();
 before('deploy:symlink', 'deploy:remove_robotstxt');
 
+
 desc('Flush caches');
 task('deploy:flush_caches', function () {
     $caches = get('flushCache', false);
@@ -281,7 +282,7 @@ task('rollback:publishresources', function () {
     run('FLOW_CONTEXT={{flow_context}} {{bin/php}} {{release_path}}/{{flow_command}} resource:publish');
 })->setPrivate();
 after('rollback', 'rollback:publishresources');
-
+after('rollback:publishresource', 'restart:php');
 
 before('deploy', 'slack:notify');
 after('success', 'slack:notify:success');
