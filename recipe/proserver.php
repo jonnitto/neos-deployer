@@ -287,7 +287,6 @@ desc('Configure the server to force a specific domain');
 task('domain:force', [
     'domain:force:ask',
     'domain:force:write',
-    'domain:dns',
     'restart:nginx'
 ])->shallow();
 
