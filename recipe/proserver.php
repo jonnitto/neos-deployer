@@ -12,6 +12,7 @@ task('install', [
     'install:check',
     'ssh:key',
     'install:wait',
+    'install:sendmail',
     'deploy:prepare',
     'deploy:lock',
     'deploy:release',
@@ -300,6 +301,33 @@ task('install:nginx', function () {
         run("sudo sed -i conf 's%FLOW_CONTEXT Production%FLOW_CONTEXT {{flow_context}}%' $neosConfFile");
     }
 })->setPrivate()->onRoles('Root');
+
+
+desc('Activate sendmail on the server');
+task('install:sendmail', function () {
+    // Is it already enabled? 
+    if (!test('grep -q "^sendmail_" /etc/rc.conf')) {
+        writebox('Sending mails is already activated');
+        return;
+    }
+
+    if (!askConfirmation(' Should the server be able to sending mails? ', true)) {
+        return;
+    }
+
+    // Check root email
+    if (test('grep -q "^# root:	me@my.domain" /etc/mail/aliases')) {
+        $domain = getRealHostname();
+        $email = ask(' Please enter a valid email address: ', "server@{$domain}");
+        run("sudo sed -i .backup 's/^# root:	me@my.domain$/root:	$email/' /etc/mail/aliases");
+    }
+
+    // Make installation
+    cd('/etc/mail');
+    run('sudo make');
+    run('sudo make install');
+    run('sudo service sendmail start');
+})->onRoles('Root');
 
 
 desc('Restart nginx');

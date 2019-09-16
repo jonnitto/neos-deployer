@@ -58,6 +58,7 @@ Run these taks with `dep COMMAND`. If you want to list all commands, enter `dep`
 | `domain:dns`         | Output the IP addresses for the host                        |
 | `domain:ssl`         | Add Let's Encrypt SSL certificte                            |
 | `domain:ssl:request` | Requested the SSl certificte                                |
+| `install:sendmail`   | Activate sendmail on the server                             |
 | `restart:nginx`      | Restart nginx                                               |
 | `restart:php`        | Restart PHP                                                 |
 | `tunnel:root`        | Create a tunnel connection via localhost with the root user |
