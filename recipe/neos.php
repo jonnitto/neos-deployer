@@ -282,7 +282,7 @@ task('rollback:publishresources', function () {
     run('FLOW_CONTEXT={{flow_context}} {{bin/php}} {{release_path}}/{{flow_command}} resource:publish');
 })->setPrivate();
 after('rollback', 'rollback:publishresources');
-after('rollback:publishresource', 'restart:php');
+after('rollback:publishresources', 'restart:php');
 
 before('deploy', 'slack:notify');
 after('success', 'slack:notify:success');
