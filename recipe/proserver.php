@@ -314,6 +314,8 @@ task('install:sendmail', function () {
     if (!askConfirmation(' Should the server be able to sending mails? ', true)) {
         return;
     }
+    
+    run("sudo sed -i .backup 's/^sendmail_/# sendmail_/' /etc/rc.conf");
 
     // Check root email
     if (test('grep -q "^# root:	me@my.domain" /etc/mail/aliases')) {
