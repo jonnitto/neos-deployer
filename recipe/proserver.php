@@ -88,8 +88,8 @@ task('tunnel', function () {
     $forward = '2222';
     $type = askChoice(' Choose your type of connection ', ['SFTP', 'MySQL']);
     if ($type == 'MySQL') {
-        $port = '3333';
-        $forward = '3306';
+        $port = '3306';
+        $forward = '3333';
     }
     writebox("The port <strong>$forward</strong> is now forwared to <strong>127.0.0.1</strong> with the port <strong>$port</strong> for a <strong>$type</strong> connetion.<br>To close the tunnel, enter <strong>exit</strong> in the console");
     runLocally("ssh -L $forward:127.0.0.1:$port -J jumping@ssh-jumphost.karlsruhe.punkt.de {{user}}@{{hostname}}", ['timeout' => null, 'tty' => true]);
@@ -315,7 +315,7 @@ task('install:sendmail', function () {
     if (!askConfirmation(' Should the server be able to sending mails? ', true)) {
         return;
     }
-    
+
     run("sudo sed -i .backup 's/^sendmail_/# sendmail_/' /etc/rc.conf");
 
     // Check root email
