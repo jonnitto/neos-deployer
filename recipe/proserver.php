@@ -82,17 +82,18 @@ foreach ($roleRootTasks as $task) {
 }
 
 
-desc('Create a tunnel connection via localhost with the web user');
-task('tunnel:web', function () {
-    writebox('To close the tunnel, enter <strong>exit</strong> in the console');
-    runLocally('ssh -L 2222:127.0.0.1:22 -J jumping@ssh-jumphost.karlsruhe.punkt.de {{user}}@{{hostname}}', ['timeout' => null, 'tty' => true]);
+desc('Create a tunnel connection via localhost');
+task('tunnel', function () {
+    $port = '22';
+    $forward = '2222';
+    $type = askChoice(' Choose your type of connection ', ['SFTP', 'MySQL']);
+    if ($type == 'MySQL') {
+        $port = '3333';
+        $forward = '3306';
+    }
+    writebox("The port <strong>$forward</strong> is now forwared to <strong>127.0.0.1</strong> with the port <strong>$port</strong> for a <strong>$type</strong> connetion.<br>To close the tunnel, enter <strong>exit</strong> in the console");
+    runLocally("ssh -L $forward:127.0.0.1:$port -J jumping@ssh-jumphost.karlsruhe.punkt.de {{user}}@{{hostname}}", ['timeout' => null, 'tty' => true]);
 })->onRoles('Proserver');
-
-desc('Create a tunnel connection via localhost with the root user');
-task('tunnel:root', function () {
-    writebox('To close the tunnel, enter <strong>exit</strong> in the console');
-    runLocally('ssh -L 2222:127.0.0.1:22 -J jumping@ssh-jumphost.karlsruhe.punkt.de {{user}}@{{hostname}}', ['timeout' => null, 'tty' => true]);
-})->onRoles('Root');
 
 
 task('install:set_globals', function () {
