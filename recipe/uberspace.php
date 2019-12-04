@@ -2,7 +2,7 @@
 
 namespace Deployer;
 
-require_once 'neos.php';
+require_once __DIR__ . '/../general/neos.php';
 
 set('html_path', '/var/www/virtual/{{user}}');
 set('deploy_path', '/var/www/virtual/{{user}}/{{deploy_folder}}');
@@ -16,6 +16,7 @@ task('install', [
     'install:wait',
     'install:php_settings',
     'restart:php',
+    'install:set_credentials',
     'deploy:prepare',
     'deploy:lock',
     'deploy:release',
@@ -23,7 +24,6 @@ task('install', [
     'deploy:vendors',
     'deploy:shared',
     'deploy:writable',
-    'install:set_credentials',
     'install:settings',
     'install:import',
     'deploy:run_migrations',
@@ -36,9 +36,14 @@ task('install', [
     'install:output_db'
 ]);
 
+
+after('rollback:publishresources', 'restart:php');
+
+
 task('install:php_settings', function () {
     run('echo "memory_limit = 1024M" > ~/etc/php.d/memory_limit.ini');
 })->shallow()->setPrivate();
+
 
 task('install:set_credentials', function () {
     set('dbName', '{{user}}');
@@ -72,9 +77,9 @@ __EOF__
 })->setPrivate();
 
 
-task('install:import_database', function () {
+task('install:import:database', function () {
     if (askConfirmation(' Do you want to import your local database? ', true)) {
-        dbUpload(
+        dbUploadNeos(
             get('release_path'),
             get('dbName'),
             get('dbUser'),
@@ -84,9 +89,9 @@ task('install:import_database', function () {
 })->setPrivate();
 
 
-task('install:import_resources', function () {
+task('install:import:resources', function () {
     if (askConfirmation(' Do you want to import your local persistent resources? ', true)) {
-        resourcesUpload(parse('{{deploy_path}}/shared'));
+        resourcesUploadNeos(parse('{{deploy_path}}/shared'));
     }
 })->setPrivate();
 

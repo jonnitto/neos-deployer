@@ -1,7 +1,17 @@
 # Install: dep install
 # Deploy: dep deploy
 
-.base: &base # Put here the hostname
+.base: &base 
+
+  # The proServer can run with nginx or apache
+  # Defaults to apache
+  server: nginx
+
+  # Please enter here a email address where you as a service provider
+  # are reachable. This email address is used to send you error notifications
+  serverEmail: webhost@your-domain.tld
+
+  # Put here the hostname
   hostname: vpro__XXXX__.proserver.punkt.de
 
   # Put here the username
