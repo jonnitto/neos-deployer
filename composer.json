@@ -15,7 +15,7 @@
         ]
     },
     "require": {
-        "deployer/deployer": "^6.4",
+        "deployer/deployer": "^6.6",
         "deployer/recipes": "^6.2"
     }
 }
