@@ -8,13 +8,13 @@ set('runningServer', function () {
     return getRunningServerSystemProserver();
 });
 
-desc('Check if Neos is already installed');
+desc('Check if a server email address is set');
 task('install:check_server_email', function () {
     if (!has('serverEmail')) {
         writebox('<strong>The variable serverEmail is not set</strong><br>Please add it to you deploy.yaml and start the installation again.', 'red');
         exit;
     }
-})->shallow()->setPrivate()->onRoles('Proserver');;
+})->shallow()->setPrivate()->onRoles('Proserver');
 
 
 desc('Create a tunnel connection via localhost');
