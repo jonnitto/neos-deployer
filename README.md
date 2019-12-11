@@ -14,14 +14,15 @@ composer require --dev jonnitto/neos-deployer
 
 ## Hoster
 
-Currently, there are settings for these hoster:
+Currently, there are settings for these hosters:
 
 - [proServer from punkt.de](documentation/proServer.md)
 - Uberspace
+- [Mittwald](documentation/Mittwald.md)
 
-## Comands for every hoster
+## Commands for every hoster
 
-Run these taks with `dep COMMAND`. If you want to list all commands, enter `dep` or `dep list`
+Run these tasks with `dep COMMAND`. If you want to list all commands, enter `dep` or `dep list`
 
 **Most important commands:**
 
@@ -56,9 +57,9 @@ Run these taks with `dep COMMAND`. If you want to list all commands, enter `dep`
 | -------------------- | ----------------------------------------------------------- |
 | `domain:force`       | Configure the server to force a specific domain             |
 | `domain:dns`         | Output the IP addresses for the host                        |
-| `domain:ssl`         | Add Let's Encrypt SSL certificte                            |
-| `domain:ssl:request` | Requested the SSl certificte                                |
-| `install:sendmail`   | Activate sendmail on the server                             |
+| `domain:ssl`         | Add Let's Encrypt SSL certificate                           |
+| `domain:ssl:request` | Requested the SSl certificate                               |
+| `install:sendmail`   | Activate sendmail on the server                             |
 | `restart:nginx`      | Restart nginx                                               |
 | `restart:php`        | Restart PHP                                                 |
 | `tunnel:root`        | Create a tunnel connection via localhost with the root user |
