@@ -1,4 +1,6 @@
-# Deployer tasks
+# Deployer tasks for Neos CMS
+
+These deployer scripts are built on top of [Deployer](https://deployer.org). Most of the tasks are provided by this library already; this package adds just some optimization for the install process as well as the needed actions for deploying a project. There are also some helper tasks available, who should make your life as a developer a bit easier. Please run the deployer scripts only in your development environment, as Deployer connects automatically to the needed live server.
 
 You can look at the [examples](examples) folder to look how to set up a deployment.
 The files should be saved on the root of you project. In the `deploy.yaml` file you will
