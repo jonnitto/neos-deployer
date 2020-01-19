@@ -92,7 +92,7 @@ function getRealHostname(): string
  * @param array $data The data for the table
  * @return void
  */
-function outputTable(?string $headline, array $data): void
+function outputTable(?string $headline = null, array $data): void
 {
     writeln('');
     writeln('');
@@ -159,7 +159,7 @@ function writebox(string $content, string $bg = 'blue', string $color = 'white')
  * @param string|null $string
  * @return string|null
  */
-function cleanUpWhitespaces(?string $string): ?string
+function cleanUpWhitespaces(?string $string = null): ?string
 {
     if (!$string) {
         return null;
@@ -242,7 +242,6 @@ function compareBackupFiles(string $file, int $i): bool
     $prevIndex = $i - 1;
     return test("diff $file.backup.$i $file.backup.$prevIndex");
 }
-
 
 /**
  * Neos-specific functions
@@ -354,7 +353,6 @@ function dbUploadNeos(
     dbExtract($path, $database, $username, $password, $host, $port);
     dbRemoveLocalDump();
 }
-
 
 /**
  * Proserver-specific functions
