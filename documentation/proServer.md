@@ -56,8 +56,6 @@ Create `deploy.yaml` with following content and edit it following points:
   # flow_context: Production/Live
 
   sshOptions:
-    UserKnownHostsFile: /dev/null
-    StrictHostKeyChecking: no
     ProxyJump: jumping@ssh-jumphost.karlsruhe.punkt.de
 
 domain.tld:

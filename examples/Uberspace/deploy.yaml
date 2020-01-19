@@ -57,7 +57,3 @@ neos-site.com:
     paths:
       - 'DistributionPackages/**/Resources/Public'
       - 'DistributionPackages/**/Resources/Private/InlineAssets'
-
-  sshOptions:
-    UserKnownHostsFile: /dev/null
-    StrictHostKeyChecking: no

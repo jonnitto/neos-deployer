@@ -66,8 +66,6 @@
       - 'DistributionPackages/**/Resources/Private/InlineAssets'
 
   sshOptions:
-    UserKnownHostsFile: /dev/null
-    StrictHostKeyChecking: no
     ProxyJump: jumping@ssh-jumphost.karlsruhe.punkt.de
 
 # The target domain
