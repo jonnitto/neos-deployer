@@ -16,7 +16,7 @@ composer require --dev jonnitto/neos-deployer
 
 ## Hoster
 
-Currently, there are settings for these hoster:
+Currently, there are settings for these hosters:
 
 - [proServer from punkt.de](documentation/proServer.md)
 - [Uberspace](documentation/Uberspace.md)
@@ -26,9 +26,9 @@ Currently, there are settings for these hoster:
 To get a notification in Slack, you have to set `slack_webhook`.  
 [You can register it here](https://slack.com/oauth/authorize?&client_id=113734341365.225973502034&scope=incoming-webhook)
 
-## Comands for every hoster
+## Commands for every hoster
 
-Run these taks with `dep COMMAND`. If you want to list all commands, enter `dep` or `dep list`
+Run these tasks with `dep COMMAND`. If you want to list all commands, enter `dep` or `dep list`
 
 **Most important commands:**
 
@@ -56,9 +56,10 @@ Run these taks with `dep COMMAND`. If you want to list all commands, enter `dep`
 | `edit:settings`            | Edit the Neos Settings.yaml file                             |      ✓      |     ✓     |
 | `domain:force`             | Configure the server to force a specific domain (Nginx only) |             |     ✓     |
 | `domain:dns`               | Output the IP addresses for the host                         |             |     ✓     |
-| `domain:ssl`               | Add Let's Encrypt SSL certificte                             |             |     ✓     |
-| `domain:ssl:request`       | Requested the SSl certificte                                 |             |     ✓     |
+| `domain:ssl`               | Add Let's Encrypt SSL certificate                            |             |     ✓     |
+| `domain:ssl:request`       | Requested the SSl certificate                                |             |     ✓     |
 | `install:sendmail`         | Activate sendmail on the server                              |             |     ✓     |
+| `install:redis`            | Activate redis on the server                                 |             |     ✓     |
 | `install:elasticsearch`    | Activate Elasticsearch on the server                         |             |     ✓     |
 | `install:set_server`       | Set server to Apache or Nginx, based on `deploy.yaml`        |             |     ✓     |
 | `restart:server`           | Restart server (Apache or Nginx)                             |             |     ✓     |

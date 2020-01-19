@@ -158,7 +158,7 @@ task('domain:ssl:write', function () {
     $currentArray = explode(' ', $domainsString);
     $currentEntry = implode("\n", $currentArray);
 
-    writebox("<strong>Add Let's Encrypt SSL certificte</strong>
+    writebox("<strong>Add Let's Encrypt SSL certificate</strong>
 If you have multiple domains, you will be asked
 after every entry if you wand to add another domain.
 
@@ -203,12 +203,12 @@ To cancel enter <strong>exit</strong> as answer");
     deleteDuplicateBackupFile($file, $fileIndex);
 })->setPrivate()->shallow()->onRoles('Root');
 
-desc('Requested the SSl certificte');
+desc('Requested the SSl certificate');
 task('domain:ssl:request', function () {
     run('sudo dehydrated -c');
 })->onRoles('Root');
 
-desc("Add Let's Encrypt SSL certificte");
+desc("Add Let's Encrypt SSL certificate");
 task('domain:ssl', [
     'domain:ssl:domain',
     'domain:ssl:write',
