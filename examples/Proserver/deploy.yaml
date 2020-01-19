@@ -4,7 +4,7 @@
 .base: &base
 
   # The proServer can run with nginx or apache
-  # Defaults to apache
+  # Defaults to nginx
   server: nginx
 
   # Please enter here a email address where you as a service provider
