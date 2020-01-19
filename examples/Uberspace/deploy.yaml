@@ -2,7 +2,7 @@
 # Deploy: dep deploy
 
 # The target domain
-neos-site.com:
+domain.tld:
   # Put here the hostname
   # https://dashboard.uberspace.de/dashboard/datasheet
   hostname: __SERVER__.uberspace.de
@@ -10,8 +10,20 @@ neos-site.com:
   # Put here the Uberspace username
   user: __USER__
 
+  # Enter which ssh key should be generated and used
+  # Defaults to id_rsa
+  sshKey: 'special_key'
+
   # Put here the ssh repository
+  # If the user is not provided, the user git get used (with the help of a ssh config file)
+  # If the domain has more than domain.tld, an configuration entry in ~/.ssh/config will be genereated.
+  # In combinantion with `sshKey` this can be used if multiple sites are needed on one host
   repository: git@github.com:__OWNER__/__REPOSITORY__.git
+
+  # Put here the database name
+  # If this settings is not provided it will defaults to the Uberspace username
+  # If a value is provided, the username from Uberspace get prefixed automatically
+  database: domain_tld
 
   # Add here the slack webhook
   slack_webhook: https://hooks.slack.com/services/__YOUR/SLACK/WEBHOOK__
@@ -57,7 +69,3 @@ neos-site.com:
     paths:
       - 'DistributionPackages/**/Resources/Public'
       - 'DistributionPackages/**/Resources/Private/InlineAssets'
-
-  sshOptions:
-    UserKnownHostsFile: /dev/null
-    StrictHostKeyChecking: no
