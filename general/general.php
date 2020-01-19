@@ -17,8 +17,12 @@ set('port', 22);
 set('forwardAgent', false);
 set('multiplexing', true);
 set('deployUser', function () {
-    $gitUser = runLocally('git config --get user.name');
-    return $gitUser ? $gitUser : get('user');
+    $getUserCommand = 'git config --get user.name';
+    $user = get('user');
+    if (!testLocally("$getUserCommand 2>/dev/null || true")) {
+        $user = runLocally($getUserCommand);
+    }
+    return $user;
 });
 set('slack_text', '_{{deployUser}}_ deploying `{{branch}}` to *{{target}}*');
 set('release_name', function () {
