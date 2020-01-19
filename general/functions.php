@@ -11,11 +11,15 @@ use Symfony\Component\Console\Helper\Table;
  * This is done by dropping the database and create an new, emty one
  *
  * @param string $database The name of the database
- * @param string $characterSet The character set of the new database, defaults to `utf8mb4`
+ * @param string|null $characterSet (optional) The character set of the new database
  * @return string
  */
-function dbFlushDbSql(string $database, string $characterSet = 'utf8mb4'): string
+function dbFlushDbSql(string $database, ?string $characterSet = null): string
 {
+    if (!$characterSet) {
+        $characterSet = getNeosNamespace() == 'TYPO3' ? 'utf8' : 'utf8mb4';
+    }
+
     return sprintf("DROP DATABASE IF EXISTS `%s`; CREATE DATABASE `%s` CHARACTER SET $characterSet COLLATE {$characterSet}_unicode_ci;", $database, $database);
 }
 
@@ -256,6 +260,21 @@ function dbLocalDumpNeos(): void
     $port = isset($settings['port']) ? $settings['port'] : '3306';
     runLocally("mysqldump -h {$settings['host']} -P {$port} -u {$settings['user']} -p{$settings['password']} {$settings['dbname']} > dump.sql");
     runLocally('tar cfz dump.sql.tgz dump.sql');
+}
+
+/**
+ * Returns the namespace from Neos
+ * 
+ * @return string 
+ */
+
+function getNeosNamespace(): string
+{
+    if (testLocally('composer info typo3/neos -q')) {
+        return 'TYPO3';
+    } else {
+        return 'Neos';
+    }
 }
 
 /**
