@@ -14,6 +14,7 @@ task('install', [
     'install:check',
     'ssh:key',
     'install:wait',
+    'php:version',
     'install:php_settings',
     'restart:php',
     'install:set_credentials',
