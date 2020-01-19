@@ -2,7 +2,7 @@
 
 namespace Deployer;
 
-require_once 'neos.php';
+require_once __DIR__ . '/../general/neos.php';
 
 set('html_path', '/var/www/virtual/{{user}}');
 set('deploy_path', '/var/www/virtual/{{user}}/{{deploy_folder}}');
@@ -14,8 +14,10 @@ task('install', [
     'install:check',
     'ssh:key',
     'install:wait',
+    'php:version',
     'install:php_settings',
     'restart:php',
+    'install:set_credentials',
     'deploy:prepare',
     'deploy:lock',
     'deploy:release',
@@ -23,7 +25,6 @@ task('install', [
     'deploy:vendors',
     'deploy:shared',
     'deploy:writable',
-    'install:set_credentials',
     'install:settings',
     'install:import',
     'deploy:run_migrations',
@@ -36,45 +37,38 @@ task('install', [
     'install:output_db'
 ]);
 
+
+after('rollback:publishresources', 'restart:php');
+
+
 task('install:php_settings', function () {
     run('echo "memory_limit = 1024M" > ~/etc/php.d/memory_limit.ini');
 })->shallow()->setPrivate();
 
+
 task('install:set_credentials', function () {
-    set('dbName', '{{user}}');
+    $dbSuffix = has('database') ? '_{{database}}' : '';
+    $stage = has('stage') ? '_{{stage}}' : '';
+    set('dbName', "{{user}}{$dbSuffix}{$stage}");
     set('dbUser', '{{user}}');
     set('dbPassword', run('grep -Po -m 1 "password=\K(\S)*" ~/.my.cnf'));
+
+    if (get('dbName') != get('user')) {
+        // We need to create the db
+        run('mysql -e "CREATE DATABASE {{dbName}}"');
+    }
 })->shallow()->setPrivate();
 
-task('install:settings', function () {
-    cd('{{release_path}}');
-    run('
-cat > Configuration/Settings.yaml <<__EOF__
-Neos: &settings
-  Imagine:
-    driver: Imagick
-  Flow:
-    core:
-      phpBinaryPathAndFilename: \'/usr/bin/php\'
-      subRequestIniEntries:
-        memory_limit: 2048M
-    persistence:
-      backendOptions:
-        driver: pdo_mysql
-        dbname: "{{dbName}}"
-        user: "{{dbUser}}"
-        password: "{{dbPassword}}"
-        host: localhost
 
-TYPO3: *settings
-__EOF__
-');
+task('install:settings', function () {
+    $settingsTemplate = parse(file_get_contents(__DIR__ . '/../template/uberspace/neos/Settings.yaml'));
+    run("echo '$settingsTemplate' > {{release_path}}/Configuration/Settings.yaml");
 })->setPrivate();
 
 
-task('install:import_database', function () {
+task('install:import:database', function () {
     if (askConfirmation(' Do you want to import your local database? ', true)) {
-        dbUpload(
+        dbUploadNeos(
             get('release_path'),
             get('dbName'),
             get('dbUser'),
@@ -84,20 +78,19 @@ task('install:import_database', function () {
 })->setPrivate();
 
 
-task('install:import_resources', function () {
+task('install:import:resources', function () {
     if (askConfirmation(' Do you want to import your local persistent resources? ', true)) {
-        resourcesUpload(parse('{{deploy_path}}/shared'));
+        resourcesUploadNeos(parse('{{deploy_path}}/shared'));
     }
 })->setPrivate();
 
 
+desc('Set the symbolic link for this site');
 task('install:symlink', function () {
-    within('{{html_path}}', function () {
-        run('if [ -d html ]; then mv html html_OLD; fi');
-        run('rm -rf html');
-        run('ln -s {{deploy_path}}/current/Web html');
-    });
-})->setPrivate();
+    $previewDomain = parse('{{user}}.uber.space');
+    cd('{{html_path}}');
+    symlinkDomain('Web', 'html', $previewDomain);
+});
 
 
 desc('Restart PHP');

@@ -1,14 +1,36 @@
 # Install: dep install
 # Deploy: dep deploy
 
-.base: &base # Put here the hostname
+.base: &base
+
+  # The proServer can run with nginx or apache
+  # Defaults to nginx
+  server: nginx
+
+  # Please enter here a email address where you as a service provider
+  # are reachable. This email address is used to send you error notifications
+  serverEmail: webhost@your-domain.tld
+
+  # Put here the hostname
   hostname: vpro__XXXX__.proserver.punkt.de
 
   # Put here the username
   user: vpro__XXXX__
 
+  # Enter which ssh key should be generated and used
+  # Defaults to id_rsa
+  sshKey: 'special_key'
+
   # Put here the ssh repository
+  # If the user is not provided, the user git get used (with the help of a ssh config file)
+  # If the domain has more than domain.tld, an configuration entry in ~/.ssh/config will be genereated.
+  # In combinantion with `sshKey` this can be used if multiple sites are needed on one host
   repository: git@github.com:__OWNER__/__REPOSITORY__.git
+
+  # Put here the database name
+  # If this settings is not provided it will defaults to `USER_neos`
+  # If a value is provided, this will used as replacement for `neos`, the USER get prefixed automatically
+  database: domain_tld
 
   # Add here your the webhook
   slack_webhook: https://hooks.slack.com/services/__YOUR/SLACK/WEBHOOK__
@@ -56,8 +78,6 @@
       - 'DistributionPackages/**/Resources/Private/InlineAssets'
 
   sshOptions:
-    UserKnownHostsFile: /dev/null
-    StrictHostKeyChecking: no
     ProxyJump: jumping@ssh-jumphost.karlsruhe.punkt.de
 
 # The target domain
