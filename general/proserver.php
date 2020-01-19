@@ -149,12 +149,12 @@ task('domain:ssl:domain', function () {
     $GLOBALS['domain'] = getRealHostname();
 })->setPrivate()->shallow()->onRoles('Proserver');
 
-
 task('domain:ssl:write', function () {
     $file = '/var/www/letsencrypt/domains.txt';
     $fileIndex = createBackupFile($file);
     $domainsString = cleanUpWhitespaces(run("cat $file"));
-    $currentEntry = preg_replace('/\s+/', "\n", $domainsString);
+    $currentArray = explode(' ', $domainsString);
+    $currentEntry = implode("\n", $currentArray);
 
     writebox("<strong>Add Let's Encrypt SSL certificte</strong>
 If you have multiple domains, you will be asked
@@ -183,19 +183,28 @@ To cancel enter <strong>exit</strong> as answer");
         }
         writeln('');
     }
-    $newDomains = implode(" ", $domains);
-    $newEntries = preg_replace('/\s+/', "\n", $newDomains);
-    run("echo '$domainsString $newDomains' > /var/www/letsencrypt/domains.txt");
+
+    // Make sure every domain has a single entry
+    $domains = explode(' ', cleanUpWhitespaces(implode(' ', $domains)));
+
+    // Remove entries who already exists and remove double entries
+    $domains = array_unique(array_diff($domains, $currentArray));
+
+    // Save all domains in one string
+    $uniqueDomains = implode(' ', array_merge($currentArray, $domains));
+
+    // Save new entries for output on the end
+    $newEntries = implode("\n", $domains);
+
+    run("echo '$uniqueDomains' > /var/www/letsencrypt/domains.txt");
     writebox("<strong>Following entries are added:</strong><br><br>$newEntries", 'green');
     deleteDuplicateBackupFile($file, $fileIndex);
 })->setPrivate()->shallow()->onRoles('Root');
-
 
 desc('Requested the SSl certificte');
 task('domain:ssl:request', function () {
     run('sudo dehydrated -c');
 })->onRoles('Root');
-
 
 desc("Add Let's Encrypt SSL certificte");
 task('domain:ssl', [
