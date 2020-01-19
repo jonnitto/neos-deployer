@@ -42,7 +42,7 @@ task('deploy:flush_caches', function () {
 after('deploy:symlink', 'deploy:flush_caches');
 
 
-desc('Import your local database and persistent resources');
+desc('Import your local database and persistent resources to the server');
 task('install:import', [
     'install:import:database',
     'install:import:resources'

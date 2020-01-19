@@ -46,6 +46,7 @@ task('install:set_credentials', function () {
 })->shallow()->setPrivate();
 
 
+desc('Import your local database and persistent resources to the server');
 task('install:import', [
     'install:set_globals',
     'install:set_credentials',
@@ -79,6 +80,7 @@ task('install:import:resources', function () {
 })->setPrivate()->onRoles('Proserver');
 
 
+desc('Activate Redis on the server');
 task('install:redis', function () {
     $rcConfFile = '/etc/rc.conf';
     $rcLocalFile = '/etc/rc.local';
