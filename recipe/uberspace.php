@@ -52,28 +52,8 @@ task('install:set_credentials', function () {
 })->shallow()->setPrivate();
 
 task('install:settings', function () {
-    cd('{{release_path}}');
-    run('
-cat > Configuration/Settings.yaml <<__EOF__
-Neos: &settings
-  Imagine:
-    driver: Imagick
-  Flow:
-    core:
-      phpBinaryPathAndFilename: \'/usr/bin/php\'
-      subRequestIniEntries:
-        memory_limit: 2048M
-    persistence:
-      backendOptions:
-        driver: pdo_mysql
-        dbname: "{{dbName}}"
-        user: "{{dbUser}}"
-        password: "{{dbPassword}}"
-        host: localhost
-
-TYPO3: *settings
-__EOF__
-');
+    $settingsTemplate = parse(file_get_contents(__DIR__ . '/../template/uberspace/neos/Settings.yaml'));
+    run("echo '$settingsTemplate' > {{release_path}}/Configuration/Settings.yaml");
 })->setPrivate();
 
 

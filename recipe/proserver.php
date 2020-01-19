@@ -62,45 +62,7 @@ after('rollback:publishresources', 'restart:php');
 
 
 task('install:settings', function () {
-    cd('{{release_path}}');
-    run('
-cat > Configuration/Settings.yaml <<__EOF__
-Neos: &settings
-  Imagine:
-    driver: Imagick
-  Flow:
-    core:
-      subRequestIniEntries:
-        memory_limit: 2048M
-    persistence:
-      backendOptions:
-        driver: pdo_mysql
-        dbname: "{{dbName}}"
-        user: "{{dbUser}}"
-        password: "{{dbPassword}}"
-        host: localhost
-
-TYPO3: *settings
-__EOF__
-');
+    $settingsTemplate = parse(file_get_contents(__DIR__ . '/../template/proserver/neos/Settings.yaml'));
+    run("echo '$settingsTemplate' > {{release_path}}/Configuration/Settings.yaml");
 })->setPrivate()->onRoles('Proserver');
 
-
-task('install:nginx', function () {
-    $sslConfFile = '/usr/local/etc/nginx/vhosts/ssl.conf';
-    $neosConfFile = '/usr/local/etc/nginx/include/neos.conf';
-
-    $sslConfFileIndex = createBackupFile($sslConfFile);
-    $neosConfFileIndex = createBackupFile($neosConfFile);
-
-    run("sudo sed -i '' 's/welcome/neos/' $sslConfFile");
-    run("sudo sed -i '' 's%/var/www/neos/Web%{{deploy_path}}/current/Web%' $neosConfFile");
-    run("sudo sed -i '' -e '/location = \/robots\.txt {/,/}/d' $neosConfFile");
-    if (!test("grep -sFq 'FLOW_CONTEXT {{flow_context}}' $neosConfFile")) {
-        run("sudo sed -i '' 's%FLOW_CONTEXT Production%FLOW_CONTEXT {{flow_context}}%' $neosConfFile");
-    }
-    deleteDuplicateBackupFile($sslConfFile, $sslConfFileIndex);
-    deleteDuplicateBackupFile($neosConfFile, $neosConfFileIndex);
-})->shallow()->setPrivate()->onRoles('Root');
-
-before('install:set_server:nginx', 'install:nginx');

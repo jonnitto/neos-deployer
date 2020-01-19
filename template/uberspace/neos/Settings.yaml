@@ -1,0 +1,17 @@
+Neos: &settings
+  Imagine:
+    driver: Imagick
+  Flow:
+    core:
+      phpBinaryPathAndFilename: "/usr/bin/php"
+      subRequestIniEntries:
+        memory_limit: 2048M
+    persistence:
+      backendOptions:
+        driver: pdo_mysql
+        dbname: "{{dbName}}"
+        user: "{{dbUser}}"
+        password: "{{dbPassword}}"
+        host: localhost
+
+TYPO3: *settings
