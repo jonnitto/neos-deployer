@@ -96,13 +96,12 @@ task('install:import:resources', function () {
 })->setPrivate();
 
 
+desc('Set the symbolic link for this site');
 task('install:symlink', function () {
-    within('{{html_path}}', function () {
-        run('if [ -d html ]; then mv html html_OLD; fi');
-        run('rm -rf html');
-        run('ln -s {{deploy_path}}/current/Web html');
-    });
-})->setPrivate();
+    $previewDomain = parse('{{user}}.uber.space');
+    cd('{{html_path}}');
+    symlinkDomain('Web', 'html', $previewDomain);
+});
 
 
 desc('Restart PHP');

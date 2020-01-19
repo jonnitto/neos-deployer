@@ -86,6 +86,51 @@ function getRealHostname(): string
 }
 
 /**
+ * Symlinks a site to a general folder of specific domain
+ *
+ * @param string $subfolder A subfolder of current for the web root
+ * @param string $defaultFolder The folder, where the default targets are
+ * @param string|null $previewDomain Custom preview domain. If `null` it defaults to the hostname
+ * @return void
+ */
+function symlinkDomain(string $subfolder = '', string $defaultFolder = 'html', ?string $previewDomain = null): void
+{
+    $realDomain = getRealHostname();
+    $folderToWebRoot = parse('{{deploy_folder}}/current' . ($subfolder ? "/$subfolder" : ''));
+    $defaultFolderIsSymbolicLink = !test("readlink $defaultFolder 2>/dev/null || true");
+    $defaultFolderIsPresent = $defaultFolderIsSymbolicLink ? false : test("[ -d $defaultFolder ]");
+
+    if ($defaultFolderIsSymbolicLink && run("readlink $defaultFolder") == $folderToWebRoot) {
+        writebox("<strong>$realDomain</strong> is already the default domain<br>There is no need to set a domain folder.");
+        return;
+    }
+
+    if (askConfirmation(" Should $realDomain set as default target on this server? ", true)) {
+        if ($defaultFolderIsPresent) {
+            if (test("[ -d $defaultFolder.backup ]")) {
+                writebox("<strong>$defaultFolder</strong> is a folder and <strong>$defaultFolder.backup</strong> is also present<br>Please log in and check these folders.", 'red');
+                return;
+            }
+            run("mv $defaultFolder $defaultFolder.backup");
+        }
+        run("rm -rf $defaultFolder");
+        run("ln -s $folderToWebRoot $defaultFolder");
+        writebox("<strong>$realDomain</strong> is now the default target for this server", 'green');
+        return;
+    } else {
+        if (!$previewDomain) {
+            $previewDomain = get('hostname');
+        }
+        $folderToCreate = askDomain('Please enter the domain you want to link this site', "www.{$realDomain}", ["www.{$realDomain}", $realDomain, $previewDomain]);
+        if ($folderToCreate && $folderToCreate != 'exit') {
+            run("rm -rf $folderToCreate");
+            run("ln -s $folderToWebRoot $folderToCreate");
+            writebox("<strong>$folderToCreate</strong> was linked to this site", 'green');
+        }
+    }
+}
+
+/**
  * Output a table to the console
  *
  * @param string $headline (optional) The headline above the table
