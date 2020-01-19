@@ -28,22 +28,50 @@ set('slack_text', '_{{deployUser}}_ deploying `{{branch}}` to *{{target}}*');
 set('release_name', function () {
     return run('date +"%Y-%m-%d__%H-%M-%S"');
 });
+set('sshKey', 'id_rsa');
 
 
 desc('Create and/or read the deployment key');
 task('ssh:key', function () {
-    $hasKey = test('[ -f ~/.ssh/id_rsa.pub ]');
-    if (!$hasKey) {
-        run('cat /dev/zero | ssh-keygen -q -N "" -t rsa -b 4096 -C "$(hostname -f)"');
+    $userAndHostArray = explode('@', explode(":", get('repository'))[0]);
+    $repoServer = end($userAndHostArray);
+    $repoServerArray = explode(".", $repoServer);
+
+    $repoDomain = $repoServerArray[count($repoServerArray) - 2] . "." . $repoServerArray[count($repoServerArray) - 1];
+    $needToSetGitUser = count($userAndHostArray) > 1 ? false : true;
+
+    $realHostname = getRealHostname();
+
+    $sshConfigFile = '~/.ssh/config';
+    $sshKnowHostsFile = '~/.ssh/known_hosts';
+
+    if (!test('[ -f ~/.ssh/{{sshKey}}.pub ]')) {
+        // -q Silence key generation
+        // -t Set algorithm
+        // -b Specifies the number of bits in the key
+        // -N Set the passphrase
+        // -C Comment for the key
+        // -f Specifies name of the file in which to store the created key
+        run('cat /dev/zero | ssh-keygen -q -t rsa -b 4096 -N "" -C "$(hostname -f)" -f ~/.ssh/{{sshKey}}');
     }
-    $pub = run('cat ~/.ssh/id_rsa.pub');
-    writebox('Your id_rsa.pub key is:');
+
+    if (($repoDomain != $repoServer || $needToSetGitUser) && !test("grep -q '^Host $repoServer$' $sshConfigFile")) {
+        // Write ssh config (needed if we have multiple sites on one server)
+        $entry = "Host $repoServer\n  HostName $repoDomain\n  IdentityFile ~/.ssh/{{sshKey}}\n";
+        if ($needToSetGitUser) {
+            $entry .= "  User git\n";
+        }
+        run("echo \"$entry\" >> $sshConfigFile");
+    }
+
+    // We dont use `ssh-keygen -y` because we also want to output the comment
+    $pub = run('cat ~/.ssh/{{sshKey}}.pub');
+    writebox("The public key ({{sshKey}}.pub) from <strong>$realHostname</strong> is:");
     writeln("<info>$pub</info>");
     writeln('');
 
-    $repository = preg_replace('/.*@([^:]*).*/', '$1', get('repository'));
-    if ($repository) {
-        run("ssh-keyscan $repository >> ~/.ssh/known_hosts");
+    if ($repoDomain && !test("grep -q '$repoDomain' $sshKnowHostsFile")) {
+        run("ssh-keyscan $repoDomain >> $sshKnowHostsFile");
     }
 })->shallow();
 

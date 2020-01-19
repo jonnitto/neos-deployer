@@ -46,10 +46,18 @@ task('install:php_settings', function () {
 
 
 task('install:set_credentials', function () {
-    set('dbName', '{{user}}');
+    $dbSuffix = has('database') ? '_{{database}}' : '';
+    $stage = has('stage') ? '_{{stage}}' : '';
+    set('dbName', "{{user}}{$dbSuffix}{$stage}");
     set('dbUser', '{{user}}');
     set('dbPassword', run('grep -Po -m 1 "password=\K(\S)*" ~/.my.cnf'));
+
+    if (get('dbName') != get('user')) {
+        // We need to create the db
+        run('mysql -e "CREATE DATABASE {{dbName}}"');
+    }
 })->shallow()->setPrivate();
+
 
 task('install:settings', function () {
     $settingsTemplate = parse(file_get_contents(__DIR__ . '/../template/uberspace/neos/Settings.yaml'));

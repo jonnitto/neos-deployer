@@ -2,6 +2,7 @@
 
 namespace Deployer;
 
+set('html_path', '/var/www');
 set('deploy_path', '/var/www/{{deploy_folder}}');
 set('server', 'nginx');
 set('runningServer', function () {
@@ -33,7 +34,8 @@ task('tunnel', function () {
 
 task('install:set_globals', function () {
     $stage = has('stage') ? '_{{stage}}' : '';
-    $GLOBALS['dbName'] = parse("{{user}}_{{system}}{$stage}");
+    $suffix = has('database') ? get('database') : get('system');
+    $GLOBALS['dbName'] = parse("{{user}}_{$suffix}{$stage}");
     $GLOBALS['dbUser'] = 'root';
     $GLOBALS['dbPassword'] = run('sudo cat /usr/local/etc/mysql-password');
 })->shallow()->setPrivate()->onRoles('Root');
@@ -221,7 +223,6 @@ task('domain:force:ask', function () {
     }
 })->setPrivate()->shallow()->onRoles('Proserver');
 
-
 task('domain:force:write', function () {
     if (!isset($GLOBALS['domain']) || $GLOBALS['domain'] == 'exit') {
         return;
@@ -240,7 +241,7 @@ task('domain:force:write', function () {
         // Replace server names
         $fileContent = preg_replace('/^([ ]*server_name) ((?!\.proserver\.punkt\.de).)*$/m', "$1 {$GLOBALS['domain']};", $fileContent);
         // Overwrite the file
-        run("echo '{$fileContent}' > {$confFile}");
+        run("echo '{$fileContent}' > $confFile");
         return;
     }
 
@@ -263,7 +264,6 @@ task('domain:force:write', function () {
     run("echo '{$fileContent}' > {$confFile}");
     deleteDuplicateBackupFile($confFile, $confFileIndex);
 })->setPrivate()->shallow()->onRoles('Root');
-
 
 desc('Configure the server to force a specific domain');
 task('domain:force', [
@@ -358,6 +358,7 @@ task('install:set_server:nginx', function () {
 
 
 task('install:apache', function () {
+    $vHostTemplate = parse(file_get_contents(__DIR__ . '/../template/proserver/apache/vhost.conf'));
     $vhostConfFile = '/usr/local/etc/apache24/Includes/vhost.conf';
     $httpConfFile = '/usr/local/etc/apache24/httpd.conf';
     $loadModuleEntry = 'LoadModule alias_module libexec/apache24/mod_alias.so';
@@ -365,13 +366,7 @@ task('install:apache', function () {
     $vhostConfFileIndex = createBackupFile($vhostConfFile);
     $httpConfFileIndex = createBackupFile($httpConfFile);
 
-    // Edit entries
-    run("sudo sed -i '' 's%DirectoryIndex index.html index.htm index.php$%DirectoryIndex index.html index.htm index.php shopware.php%' $vhostConfFile");
-    run("sudo sed -i '' 's%/var/www/welcome%{{deploy_path}}/current{{web_root}}%' $vhostConfFile");
-
-    if (test("grep -sFq 'Redirect permanent' $vhostConfFile")) {
-        run("sudo sed -i '' 's%^[ ]*Redirect permanent.*$%  RewriteEngine On\\\n  RewriteCond \%{REQUEST_URI} !^/.well-known/acme-challenge\\\n  RewriteRule (.+) https://\%{HTTP_HOST}$1 [L,R=301]%g' $vhostConfFile");
-    }
+    run("sudo echo '$vHostTemplate' > $vhostConfFile");
 
     if (!test("grep -sFq 'LoadModule deflate_module libexec/apache24/mod_deflate.so' $httpConfFile")) {
         run("sudo sed -i '' 's%$loadModuleEntry%$loadModuleEntry\\\nLoadModule deflate_module libexec/apache24/mod_deflate.so%' $httpConfFile");
@@ -384,6 +379,24 @@ task('install:apache', function () {
     deleteDuplicateBackupFile($httpConfFile, $httpConfFileIndex);
 })->shallow()->setPrivate()->onRoles('Root');
 before('install:set_server:apache', 'install:apache');
+
+
+task('install:nginx', function () {
+    $htmlConfTemplate = parse(file_get_contents(__DIR__ . '/../template/proserver/nginx/html.conf'));
+
+    $htmlConfFile = '/usr/local/etc/nginx/include/html.conf';
+    $sslConfFile = '/usr/local/etc/nginx/vhosts/ssl.conf';
+
+    $sslConfFileIndex = createBackupFile($sslConfFile);
+    $htmlConfFileIndex = createBackupFile($htmlConfFile);
+
+    run("sudo sed -i '' 's/welcome/html/' $sslConfFile");
+    run("sudo echo '$htmlConfTemplate' > $htmlConfFile");
+
+    deleteDuplicateBackupFile($sslConfFile, $sslConfFileIndex);
+    deleteDuplicateBackupFile($htmlConfFile, $htmlConfFileIndex);
+})->shallow()->setPrivate()->onRoles('Root');
+before('install:set_server:nginx', 'install:nginx');
 
 
 desc('Restart PHP');

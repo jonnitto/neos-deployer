@@ -30,6 +30,7 @@ task('install', [
     'install:elasticsearch',
     'deploy:run_migrations',
     'deploy:publish_resources',
+    'install:symlink',
     'deploy:symlink',
     'cleanup',
     'install:nginx',
@@ -61,9 +62,14 @@ foreach ($roleProserverTasks as $task) {
 
 after('rollback:publishresources', 'restart:php');
 
+desc('Set the symbolic link for this site');
+task('install:symlink', function () {
+    cd('{{html_path}}');
+    symlinkDomain('Web');
+})->onRoles('Proserver');
+
 
 task('install:settings', function () {
     $settingsTemplate = parse(file_get_contents(__DIR__ . '/../template/proserver/neos/Settings.yaml'));
     run("echo '$settingsTemplate' > {{release_path}}/Configuration/Settings.yaml");
 })->setPrivate()->onRoles('Proserver');
-
