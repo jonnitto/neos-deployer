@@ -84,19 +84,29 @@ desc('Activate Redis on the server');
 task('install:redis', function () {
     $rcConfFile = '/etc/rc.conf';
     $rcLocalFile = '/etc/rc.local';
+    $isEnabled = test("grep -sFq 'redis_enable=\"YES\"' $rcConfFile");
 
-    if (!test("grep -sFq 'redis_enable=\"YES\"' $rcConfFile")) {
-        $rcConfFileIndex = createBackupFile($rcConfFile);
-        run("sudo echo 'redis_enable=\"YES\"' >> $rcConfFile");
-        deleteDuplicateBackupFile($rcConfFile, $rcConfFileIndex);
-        run("sudo service redis start");
+    if ($isEnabled) {
+        run('sudo service redis restart');
+        writebox('Redis is already activated');
+        return;
     }
+
+    if (!askConfirmation(' Should Redis be aktivated? ', true)) {
+        return;
+    }
+
+    $rcConfFileIndex = createBackupFile($rcConfFile);
+    run("sudo echo 'redis_enable=\"YES\"' >> $rcConfFile");
+    deleteDuplicateBackupFile($rcConfFile, $rcConfFileIndex);
+    run('sudo service redis start');
+
     if (!test("grep -sFq '/usr/local/bin/redis-cli flushall' $rcLocalFile")) {
         $rcLocalFileIndex = createBackupFile($rcLocalFile);
         run("sudo echo '/usr/local/bin/redis-cli flushall' >> $rcLocalFile");
         deleteDuplicateBackupFile($rcLocalFile, $rcLocalFileIndex);
     }
-})->setPrivate()->onRoles('Root');
+})->onRoles('Root');
 
 
 desc('Output the IP addresses for the host');
