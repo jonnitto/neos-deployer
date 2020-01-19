@@ -38,6 +38,7 @@ Run these tasks with `dep COMMAND`. If you want to list all commands, enter `dep
 | `frontend`                 | Build frontend files and push them to git                    |      ✓      |     ✓     |
 | `install`                  | Initialize installation                                      |      ✓      |     ✓     |
 | `install:import`           | Import your local database and persistent resources          |      ✓      |     ✓     |
+| `install:symlink`          | Set the symbolic link for this site                          |      ✓      |     ✓     |
 | `rollback`                 | Rollback to previous release                                 |      ✓      |     ✓     |
 | `ssh`                      | Connect to host through ssh                                  |      ✓      |     ✓     |
 | `ssh:key`                  | Create and/or read the deployment key                        |      ✓      |     ✓     |
@@ -48,12 +49,14 @@ Run these tasks with `dep COMMAND`. If you want to list all commands, enter `dep
 | `config:current`           | Show current paths                                           |      ✓      |     ✓     |
 | `config:dump`              | Print host configuration                                     |      ✓      |     ✓     |
 | `config:hosts`             | Print all hosts                                              |      ✓      |     ✓     |
-| `node:repair`              | Repair inconsistent nodes in the content repository          |      ✓      |     ✓     |
 | `node:migrate`             | List and run node migrations                                 |      ✓      |     ✓     |
+| `node:repair`              | Repair inconsistent nodes in the content repository          |      ✓      |     ✓     |
 | `site:import`              | Import the site from the a package with a xml file           |      ✓      |     ✓     |
 | `user:create_admin`        | Create a new administrator                                   |      ✓      |     ✓     |
 | `edit:cronjob`             | Edit the cronjobs                                            |      ✓      |     ✓     |
 | `edit:settings`            | Edit the Neos Settings.yaml file                             |      ✓      |     ✓     |
+| `domain:add`               | Add a domain to uberspace                                    |      ✓      |           |
+| `domain:remove`            | Remove a domain from uberspace                               |      ✓      |           |
 | `domain:force`             | Configure the server to force a specific domain (Nginx only) |             |     ✓     |
 | `domain:dns`               | Output the IP addresses for the host                         |             |     ✓     |
 | `domain:ssl`               | Add Let's Encrypt SSL certificate                            |             |     ✓     |
@@ -65,7 +68,4 @@ Run these tasks with `dep COMMAND`. If you want to list all commands, enter `dep
 | `restart:server`           | Restart server (Apache or Nginx)                             |             |     ✓     |
 | `restart:php`              | Restart PHP                                                  |      ✓      |     ✓     |
 | `tunnel`                   | Create a tunnel connection via localhost for a SFTP or MySQL |             |     ✓     |
-| `edit:cronjob`             | Edit the cronjobs                                            |      ✓      |     ✓     |
-| `domain:add`               | Add a domain to uberspace                                    |      ✓      |           |
-| `domain:remove`            | Remove a domain from uberspace                               |      ✓      |           |
 | `php:version`              | Set the PHP version on the server                            |      ✓      |           |
