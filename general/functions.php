@@ -299,7 +299,8 @@ function compareBackupFiles(string $file, int $i): bool
  */
 function dbLocalDumpNeos(): void
 {
-    $yaml = runLocally('./flow configuration:show --type Settings --path Neos.Flow.persistence.backendOptions');
+    $namespace = getNeosNamespace();
+    $yaml = runLocally("./flow configuration:show --type Settings --path $namespace.Flow.persistence.backendOptions");
     $settings = Yaml::parse($yaml);
     $port = isset($settings['port']) ? $settings['port'] : '3306';
     runLocally("mysqldump -h {$settings['host']} -P {$port} -u {$settings['user']} -p{$settings['password']} {$settings['dbname']} > dump.sql");
