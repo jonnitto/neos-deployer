@@ -27,6 +27,7 @@ task('install', [
     'install:create_database',
     'install:import',
     'install:redis',
+    'install:elasticsearch',
     'deploy:run_migrations',
     'deploy:publish_resources',
     'deploy:symlink',

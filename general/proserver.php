@@ -109,6 +109,28 @@ task('install:redis', function () {
 })->onRoles('Root');
 
 
+desc('Activate Elasticsearch on the server');
+task('install:elasticsearch', function () {
+    $rcConfFile = '/etc/rc.conf';
+    $isEnabled = test("grep -sFq 'elasticsearch_enable=\"YES\"' $rcConfFile");
+
+    if ($isEnabled) {
+        run('sudo service elasticsearch restart');
+        writebox('Elasticsearch is already activated');
+        return;
+    }
+
+    if (!askConfirmation(' Should Elasticsearch be aktivated? ', false)) {
+        return;
+    }
+
+    $rcConfFileIndex = createBackupFile($rcConfFile);
+    run("sudo echo 'elasticsearch_enable=\"YES\"' >> $rcConfFile");
+    deleteDuplicateBackupFile($rcConfFile, $rcConfFileIndex);
+    run('sudo service elasticsearch start');
+})->onRoles('Root');
+
+
 desc('Output the IP addresses for the host');
 task('domain:dns', function () {
     $ipv4 = runLocally('dig +short {{hostname}}');

@@ -59,6 +59,7 @@ Run these taks with `dep COMMAND`. If you want to list all commands, enter `dep`
 | `domain:ssl`               | Add Let's Encrypt SSL certificte                             |             |     ✓     |
 | `domain:ssl:request`       | Requested the SSl certificte                                 |             |     ✓     |
 | `install:sendmail`         | Activate sendmail on the server                              |             |     ✓     |
+| `install:elasticsearch`    | Activate Elasticsearch on the server                         |             |     ✓     |
 | `install:set_server`       | Set server to Apache or Nginx, based on `deploy.yaml`        |             |     ✓     |
 | `restart:server`           | Restart server (Apache or Nginx)                             |             |     ✓     |
 | `restart:php`              | Restart PHP                                                  |      ✓      |     ✓     |
