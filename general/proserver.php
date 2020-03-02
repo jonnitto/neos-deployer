@@ -94,7 +94,7 @@ task('install:redis', function () {
         return;
     }
 
-    if (!askConfirmation(' Should Redis be aktivated? ', true)) {
+    if (!askConfirmation(' Should Redis be activated? ', true)) {
         return;
     }
 
@@ -122,7 +122,7 @@ task('install:elasticsearch', function () {
         return;
     }
 
-    if (!askConfirmation(' Should Elasticsearch be aktivated? ', false)) {
+    if (!askConfirmation(' Should Elasticsearch be activated? ', true)) {
         return;
     }
 
