@@ -219,7 +219,11 @@ task('domain:ssl', [
 task('domain:force:ask', function () {
     if (askConfirmation(' Do you want to force a specific domain? ', true)) {
         $realHostname = getRealHostname();
-        $GLOBALS['domain'] = askDomain('Please enter the domain', "www.{$realHostname}", ["www.{$realHostname}", $realHostname]);
+
+        // Check if the realDomain seems to have a subdomain
+        $defaultDomain = substr_count($realHostname, '.') > 1 ? $realHostname : "www.{$realHostname}";
+        $suggestions = [$realHostname, "www.{$realHostname}"];
+        $GLOBALS['domain'] = askDomain('Please enter the domain', $defaultDomain, $suggestions);
     }
 })->setPrivate()->shallow()->onRoles('Proserver');
 
