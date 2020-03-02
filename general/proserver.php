@@ -434,6 +434,7 @@ $roleProserverTasks = [
     'install:output_db',
     'install:success',
     'install:wait',
+    'rollback',
     'slack:notify:failure',
     'slack:notify:success',
     'slack:notify',
