@@ -121,7 +121,10 @@ function symlinkDomain(string $subfolder = '', string $defaultFolder = 'html', ?
         if (!$previewDomain) {
             $previewDomain = get('hostname');
         }
-        $folderToCreate = askDomain('Please enter the domain you want to link this site', "www.{$realDomain}", ["www.{$realDomain}", $realDomain, $previewDomain]);
+        // Check if the realDomain seems to have a subdomain
+        $defaultDomain = substr_count($realDomain, '.') > 1 ? $realDomain : "www.{$realDomain}";
+        $suggestions = [$realDomain, "www.{$realDomain}", $previewDomain];
+        $folderToCreate = askDomain('Please enter the domain you want to link this site', $defaultDomain, $suggestions);
         if ($folderToCreate && $folderToCreate != 'exit') {
             run("rm -rf $folderToCreate");
             run("ln -s $folderToWebRoot $folderToCreate");
@@ -309,8 +312,8 @@ function dbLocalDumpNeos(): void
 
 /**
  * Returns the namespace from Neos
- * 
- * @return string 
+ *
+ * @return string
  */
 
 function getNeosNamespace(): string
