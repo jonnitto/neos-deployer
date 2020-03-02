@@ -265,7 +265,7 @@ task('domain:force:write', function () {
 
     // Overwrite the file
     $fileContent = "{$httpRedirectEntry}\n{$httpsRedirectEntry}\n{$httpsEntry}";
-    run("echo '{$fileContent}' > {$confFile}");
+    run("echo '{$fileContent}' > $confFile");
     deleteDuplicateBackupFile($confFile, $confFileIndex);
 })->setPrivate()->shallow()->onRoles('Root');
 
@@ -281,7 +281,7 @@ desc('Activate sendmail on the server');
 task('install:sendmail', function () {
     $rcConfFile = '/etc/rc.conf';
     $aliasesConfFile = '/etc/mail/aliases';
-    // Is it already enabled? 
+    // Is it already enabled?
     if (!test("grep -q '^sendmail_' $rcConfFile")) {
         writebox('Sending mails is already activated');
         return;
