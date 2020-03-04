@@ -92,7 +92,7 @@ task('frontend', function () {
     }
 
     if (!array_key_exists('paths', $config)) {
-        $config['paths'] = ['DistributionPackages/**/Resources/Public'];
+        $config['paths'] = ['DistributionPackages/**/Resources/Public', 'DistributionPackages/**/Resources/Private/InlineAssets'];
     }
 
     if ($config['command']) {

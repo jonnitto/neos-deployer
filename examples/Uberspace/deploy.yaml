@@ -65,7 +65,7 @@ domain.tld:
     message: 'STATIC: Build frontend resources'
     # Add which paths should be added by the frontend:git task.
     # The path will be checked if they exists and have commits
-    # Defaults to ['DistributionPackages/**/Resources/Public']
+    # Defaults to ['DistributionPackages/**/Resources/Public', 'DistributionPackages/**/Resources/Private/InlineAssets']
     paths:
       - 'DistributionPackages/**/Resources/Public'
       - 'DistributionPackages/**/Resources/Private/InlineAssets'
