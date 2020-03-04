@@ -7,6 +7,7 @@ require_once __DIR__ . '/../general/proserver.php';
 
 desc('Initialize Neos installation on proserver.punkt.de');
 task('install', [
+    'deploy:lock',
     'install:info',
     'install:check_server_email',
     'install:check',
@@ -17,7 +18,6 @@ task('install', [
     'install:set_globals',
     'install:set_credentials',
     'deploy:prepare',
-    'deploy:lock',
     'deploy:release',
     'deploy:update_code',
     'deploy:vendors',
