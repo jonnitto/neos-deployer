@@ -112,12 +112,10 @@ after every entry if you wand to add another domain.
 $currentEntry
 
 To cancel enter <strong>exit</strong> as answer");
-
-    // Check if the realDomain seems to have a subdomain
+    // Check if the realHostname seems to have a subdomain
     $defaultDomain = substr_count($realHostname, '.') > 1 ? $realHostname : "www.{$realHostname}";
     $suggestions = [$realHostname, "www.{$realHostname}"];
     $firstDomain = askDomain('Please enter the domain', $defaultDomain, $suggestions);
-
     if ($firstDomain == 'exit') {
         return;
     }
