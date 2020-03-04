@@ -1,8 +1,8 @@
 # Deployer tasks for Neos CMS
 
-These deployer scripts are built on top of [Deployer](https://deployer.org). Most of the tasks are provided by this library already; this package adds just some optimization for the install process as well as the needed actions for deploying a project. There are also some helper tasks available, who should make your life as a developer a bit easier. Please run the deployer scripts only in your development environment, as Deployer connects automatically to the needed live server.
+These deployer scripts are built on top of [Deployer]. Most of the tasks are provided by this library already; this package adds just some optimization for the install process as well as the needed actions for deploying a project. There are also some helper tasks available, who should make your life as a developer a bit easier. Please run the deployer scripts only in your development environment, as Deployer connects automatically to the needed live server.
 
-You can look at the [examples](examples) folder to look how to set up a deployment.
+You can look at the [examples] folder to look how to set up a deployment.
 The files should be saved on the root of you project. In the `deploy.yaml` file you will
 find explanations for all the available settings.
 
@@ -24,7 +24,7 @@ Currently, there are settings for these hosters:
 ## Slack webhook
 
 To get a notification in Slack, you have to set `slack_webhook`.  
-[You can register it here](https://slack.com/oauth/authorize?&client_id=113734341365.225973502034&scope=incoming-webhook)
+[You can register it here][slack webhook]
 
 ## Commands for every hoster
 
@@ -69,3 +69,7 @@ Run these tasks with `dep COMMAND`. If you want to list all commands, enter `dep
 | `restart:php`              | Restart PHP                                                  |      ✓      |     ✓     |
 | `tunnel`                   | Create a tunnel connection via localhost for a SFTP or MySQL |             |     ✓     |
 | `php:version`              | Set the PHP version on the server                            |      ✓      |           |
+
+[deployer]: https://deployer.org
+[slack webhook]: https://slack.com/oauth/authorize?&client_id=113734341365.225973502034&scope=incoming-webhook
+[examples]: examples
