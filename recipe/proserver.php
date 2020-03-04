@@ -52,6 +52,7 @@ $roleProserverTasks = [
     'install:import',
     'node:migrate',
     'node:repair',
+    'rollback:publishresources',
     'site:import',
     'user:create_admin'
 ];
