@@ -136,12 +136,12 @@ task('install:elasticsearch', function () {
 desc('Output the IP addresses for the host');
 task('domain:dns', function () {
     $ipv4 = runLocally('dig +short {{hostname}}');
-    $IPv6 = run('ifconfig epair0b | grep inet | grep -v fe80 | cut -w -f3');
+    $ipv6 = run('ifconfig epair0b | grep inet | grep -v fe80 | cut -w -f3');
     outputTable(
         'Following DNS records need to be set:',
         [
             'A' => $ipv4,
-            'AAAA' => $IPv6
+            'AAAA' => $ipv6
         ]
     );
 })->shallow()->onRoles('Proserver');
