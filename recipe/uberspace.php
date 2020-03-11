@@ -10,6 +10,7 @@ set('deploy_path', '/var/www/virtual/{{user}}/{{deploy_folder}}');
 
 desc('Initialize installation on Uberspace');
 task('install', [
+    'deploy:prepare',
     'deploy:lock',
     'install:info',
     'install:check',
@@ -19,7 +20,6 @@ task('install', [
     'install:php_settings',
     'restart:php',
     'install:set_credentials',
-    'deploy:prepare',
     'deploy:release',
     'deploy:update_code',
     'deploy:vendors',
