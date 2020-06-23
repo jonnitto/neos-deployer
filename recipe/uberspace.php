@@ -184,6 +184,18 @@ To finish the setup, press enter or choose the last entry");
     }
 })->shallow();
 
+
+desc('List all domains and sub-domains');
+task('domain:list', static function (): void {
+    writebox('Get list of domains, please wait...', 'black');
+    $currentEntry = run('uberspace web domain list');
+    writebox("<strong>Registered domains on the uberspace account \"{{user}}\"</strong>
+
+$currentEntry
+");
+});
+
+
 desc('Set the PHP version on the server');
 task('php:version', [
     'php:version:get',

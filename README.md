@@ -57,6 +57,7 @@ Run these tasks with `dep COMMAND`. If you want to list all commands, enter `dep
 | `edit:settings`            | Edit the Neos Settings.yaml file                             |      ✓      |     ✓     |
 | `domain:add`               | Add a domain to uberspace                                    |      ✓      |           |
 | `domain:remove`            | Remove a domain from uberspace                               |      ✓      |           |
+| `domain:list`              | List all domains and sub-domains                             |      ✓      |           |
 | `domain:force`             | Configure the server to force a specific domain (Nginx only) |             |     ✓     |
 | `domain:dns`               | Output the IP addresses for the host                         |             |     ✓     |
 | `domain:ssl`               | Add Let's Encrypt SSL certificate                            |             |     ✓     |
