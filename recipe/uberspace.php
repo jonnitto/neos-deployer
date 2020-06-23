@@ -170,6 +170,7 @@ To finish the setup, press enter or choose the last entry");
         if ($domain === 'Finish setup') {
             break;
         }
+        $currentEntriesArray = \array_values(\array_diff($currentEntriesArray, [$domain]));
         $domains[] = $domain;
     }
     if (sizeof($domains)) {
