@@ -108,8 +108,9 @@ after('install:update:database', 'restart:php');
 
 desc('Add a domain to uberspace');
 task('domain:add', static function (): void {
-    $realHostname = getRealHostname();
+    writebox('Get list of domains, please wait...', 'black');
     $currentEntry = run('uberspace web domain list');
+    $realHostname = getRealHostname();
     writebox("<strong>Add a domain to uberspace</strong>
 If you have multiple domains, you will be asked
 after every entry if you wand to add another domain.
@@ -141,14 +142,16 @@ To cancel enter <strong>exit</strong> as answer");
     }
     $outputDomains = \implode("\n", $domains);
     $ip = '';
+    writebox('Adding domains, please wait...', 'black');
     foreach ($domains as $domain) {
-        $ip = run('uberspace web domain add ' . $domain);
+        $ip = run("uberspace web domain add $domain");
     }
     writebox("<strong>Following entries are added:</strong><br><br>$outputDomains<br><br>$ip", 'green');
 })->shallow();
 
 desc('Remove a domain from uberspace');
 task('domain:remove', static function (): void {
+    writebox('Get list of domains, please wait...', 'black');
     $currentEntry = run('uberspace web domain list');
     writebox("<strong>Remove a domain from uberspace</strong>
 If you have multiple domains, you will be asked
@@ -171,6 +174,7 @@ To finish the setup, press enter or choose the last entry");
     }
     if (sizeof($domains)) {
         $outputDomains = \implode("\n", $domains);
+        writebox('Removing domains, please wait...', 'black');
         foreach ($domains as $domain) {
             run("uberspace web domain del $domain");
         }
