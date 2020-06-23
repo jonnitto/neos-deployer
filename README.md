@@ -18,8 +18,8 @@ composer require --dev jonnitto/neos-deployer
 
 Currently, there are settings for these hosters:
 
-- [proServer from punkt.de](documentation/proServer.md)
-- [Uberspace](documentation/Uberspace.md)
+- [proServer from punkt.de]
+- [Uberspace]
 
 ## Slack webhook
 
@@ -61,15 +61,19 @@ Run these tasks with `dep COMMAND`. If you want to list all commands, enter `dep
 | `domain:dns`               | Output the IP addresses for the host                         |             |     ✓     |
 | `domain:ssl`               | Add Let's Encrypt SSL certificate                            |             |     ✓     |
 | `domain:ssl:request`       | Requested the SSl certificate                                |             |     ✓     |
+| `domain:ssl:remove`        | Remove domain(s) from Let's Encrypt SSL certificate list     |             |     ✓     |
 | `install:sendmail`         | Activate sendmail on the server                              |             |     ✓     |
 | `install:redis`            | Activate redis on the server                                 |             |     ✓     |
 | `install:elasticsearch`    | Activate Elasticsearch on the server                         |             |     ✓     |
 | `install:set_server`       | Set server to Apache or Nginx, based on `deploy.yaml`        |             |     ✓     |
+| `install:update`           | Update from an older version of jonnitto/neos-deployer       |      ✓      |     ✓     |
 | `restart:server`           | Restart server (Apache or Nginx)                             |             |     ✓     |
 | `restart:php`              | Restart PHP                                                  |      ✓      |     ✓     |
 | `tunnel`                   | Create a tunnel connection via localhost for a SFTP or MySQL |             |     ✓     |
 | `php:version`              | Set the PHP version on the server                            |      ✓      |           |
 
 [deployer]: https://deployer.org
-[slack webhook]: https://slack.com/oauth/authorize?&client_id=113734341365.225973502034&scope=incoming-webhook
 [examples]: examples
+[proserver from punkt.de]: documentation/proServer.md
+[uberspace]: documentation/Uberspace.md
+[slack webhook]: https://slack.com/oauth/authorize?&client_id=113734341365.225973502034&scope=incoming-webhook

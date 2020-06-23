@@ -9,14 +9,9 @@
             "email": "me@jonnitto.ch"
         }
     ],
-    "autoload": {
-        "files": [
-            "autoload.php"
-        ]
-    },
     "require": {
+        "php": "^7.1",
         "ext-intl": "*",
-        "deployer/deployer": "^6.6",
-        "deployer/recipes": "^6.2"
+        "deployer/deployer": "^6.8"
     }
 }

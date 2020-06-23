@@ -67,27 +67,6 @@ In order for a website to be accessible to visitors, it must be published to the
 
 You can use the command `dep install:symlink` to create a correct symlink
 
-### Multi-Domain Setup
-
-In order to be able to have multiple sites on one instance, you have to set some additional config in your `deploy.yaml`:
-
-```yaml
-.base: &base
-  sshKey: DomainTld
-  repository: domain.tld.github.com:gesagtgetan/__REPOSITORY__.git
-  database: domain_tld
-  deploy_folder: DomainTld
-```
-
-| Setting         | Description                                                                                                                                                                                                                                            |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `sshKey`        | This sets the name of the key file, who will be added for the deployment key. A key can be used only for one repo.                                                                                                                                     |
-| `repository`    | The create the ability, to use different key for the same service, you can add a custom domain in front of default domain (`github.com`). With this and the `sshKey` setting a special file (`.ssh/config`) with the connection settings gets written. |
-| `database`      | As every site need his own database, you have to set this one. The username (`vpro_XXXX_`) gets prefixed automatically                                                                                                                                 |
-| `deploy_folder` | Every page need his own place to save the files, so you need to set this also.                                                                                                                                                                         |
-
-You don't have to write the settings like that, but it is recommended to do it like that.
-
 ## Going live
 
 ### Set the DNS records

@@ -7,46 +7,39 @@ require_once __DIR__ . '/../general/neos.php';
 set('html_path', '/var/www');
 set('deploy_path', '/var/www/{{deploy_folder}}');
 set('server', 'nginx');
-set('runningServer', function () {
+set('runningServer', static function (): ?string {
     return getRunningServerSystemProserver();
 });
 
-desc('Initialize Neos installation on proserver.punkt.de');
-task('install', [
-    'deploy:prepare',
-    'deploy:lock',
-    'install:info',
-    'install:check_server_email',
-    'install:check',
-    'ssh:key',
-    'install:wait',
-    'install:set_server',
-    'install:sendmail',
-    'install:set_globals',
-    'install:set_credentials',
-    'deploy:release',
-    'deploy:update_code',
-    'deploy:vendors',
-    'deploy:shared',
-    'deploy:writable',
-    'install:settings',
-    'install:create_database',
-    'install:import',
-    'install:redis',
-    'install:elasticsearch',
-    'deploy:run_migrations',
-    'deploy:publish_resources',
-    'install:symlink',
-    'deploy:symlink',
-    'cleanup',
-    'install:nginx',
-    'install:apache',
-    'restart:server',
-    'deploy:unlock',
-    'install:success',
-    'install:output_db',
-    'domain:dns'
-])->shallow();
+
+desc('Create a tunnel connection via localhost');
+task('tunnel', static function (): void {
+    $port = '22';
+    $forward = '2222';
+    $type = askChoice(' Choose your type of connection ', ['SFTP', 'MySQL']);
+    if ($type === 'MySQL') {
+        $port = '3306';
+        $forward = '3333';
+    }
+    writebox("The port <strong>$forward</strong> is now forwared to <strong>127.0.0.1</strong> with the port <strong>$port</strong> for a <strong>$type</strong> connection.<br>To close the tunnel, enter <strong>exit</strong> in the console");
+    // https://github.com/deployphp/deployer/issues/1891
+    runLocally("ssh -L $forward:127.0.0.1:$port -J jumping@ssh-jumphost.karlsruhe.punkt.de {{user}}@{{hostname}}", ['timeout' => null, 'tty' => true]);
+})->onRoles('Proserver');
+
+
+task('install:set_globals', static function (): void {
+    $GLOBALS['dbName'] = getDbName();
+    $GLOBALS['dbUser'] = 'root';
+    $GLOBALS['dbPassword'] = run('sudo cat /usr/local/etc/mysql-password');
+})->shallow()->setPrivate()->onRoles('Root');
+
+
+task('install:set_credentials', static function (): void {
+    set('dbName', $GLOBALS['dbName']);
+    set('dbUser', $GLOBALS['dbUser']);
+    set('dbPassword', $GLOBALS['dbPassword']);
+})->shallow()->setPrivate();
+
 
 desc('Check if a server email address is set');
 task('install:check_server_email', function () {
@@ -55,36 +48,6 @@ task('install:check_server_email', function () {
         exit;
     }
 })->shallow()->setPrivate()->onRoles('Proserver');
-
-
-desc('Create a tunnel connection via localhost');
-task('tunnel', function () {
-    $port = '22';
-    $forward = '2222';
-    $type = askChoice(' Choose your type of connection ', ['SFTP', 'MySQL']);
-    if ($type == 'MySQL') {
-        $port = '3306';
-        $forward = '3333';
-    }
-    writebox("The port <strong>$forward</strong> is now forwared to <strong>127.0.0.1</strong> with the port <strong>$port</strong> for a <strong>$type</strong> connetion.<br>To close the tunnel, enter <strong>exit</strong> in the console");
-    runLocally("ssh -L $forward:127.0.0.1:$port -J jumping@ssh-jumphost.karlsruhe.punkt.de {{user}}@{{hostname}}", ['timeout' => null, 'tty' => true]);
-})->onRoles('Proserver');
-
-
-task('install:set_globals', function () {
-    $stage = has('stage') ? '_{{stage}}' : '';
-    $suffix = has('database') ? get('database') : get('system');
-    $GLOBALS['dbName'] = parse("{{user}}_{$suffix}{$stage}");
-    $GLOBALS['dbUser'] = 'root';
-    $GLOBALS['dbPassword'] = run('sudo cat /usr/local/etc/mysql-password');
-})->shallow()->setPrivate()->onRoles('Root');
-
-
-task('install:set_credentials', function () {
-    set('dbName', $GLOBALS['dbName']);
-    set('dbUser', $GLOBALS['dbUser']);
-    set('dbPassword', $GLOBALS['dbPassword']);
-})->shallow()->setPrivate();
 
 
 desc('Import your local database and persistent resources to the server');
@@ -96,22 +59,17 @@ task('install:import', [
 ]);
 
 
-task('install:import:database', function () {
+task('install:import:database', static function (): void {
     if (askConfirmation(' Do you want to import your local database? ', true)) {
         dbLocalDumpNeos();
         uploadProserver('dump.sql.tgz', get('release_path'));
-        dbExtract(
-            get('release_path'),
-            get('dbName'),
-            get('dbUser'),
-            get('dbPassword')
-        );
+        dbExtract(get('release_path'), get('dbName'));
         dbRemoveLocalDump();
     }
 })->setPrivate()->onRoles('Proserver');
 
 
-task('install:import:resources', function () {
+task('install:import:resources', static function (): void {
     if (askConfirmation(' Do you want to import your local persistent resources? ', true)) {
         resourcesLocalCompressNeos();
         uploadProserver('Resources.tgz', parse('{{deploy_path}}/shared'));
@@ -122,10 +80,10 @@ task('install:import:resources', function () {
 
 
 desc('Activate Redis on the server');
-task('install:redis', function () {
+task('install:redis', static function (): void {
     $rcConfFile = '/etc/rc.conf';
     $rcLocalFile = '/etc/rc.local';
-    $isEnabled = test("grep -sFq 'redis_enable=\"YES\"' $rcConfFile");
+    $isEnabled = test('grep -sFq \'redis_enable="YES"\' ' . $rcConfFile);
 
     if ($isEnabled) {
         run('sudo service redis restart');
@@ -138,22 +96,22 @@ task('install:redis', function () {
     }
 
     $rcConfFileIndex = createBackupFile($rcConfFile);
-    run("sudo echo 'redis_enable=\"YES\"' >> $rcConfFile");
+    run('sudo echo \'redis_enable="YES"\' >> ' . $rcConfFile);
     deleteDuplicateBackupFile($rcConfFile, $rcConfFileIndex);
     run('sudo service redis start');
 
-    if (!test("grep -sFq '/usr/local/bin/redis-cli flushall' $rcLocalFile")) {
+    if (!test('grep -sFq "/usr/local/bin/redis-cli flushall" ' . $rcLocalFile)) {
         $rcLocalFileIndex = createBackupFile($rcLocalFile);
-        run("sudo echo '/usr/local/bin/redis-cli flushall' >> $rcLocalFile");
+        run('sudo echo "/usr/local/bin/redis-cli flushall" >> ' . $rcLocalFile);
         deleteDuplicateBackupFile($rcLocalFile, $rcLocalFileIndex);
     }
 })->onRoles('Root');
 
 
 desc('Activate Elasticsearch on the server');
-task('install:elasticsearch', function () {
+task('install:elasticsearch', static function (): void {
     $rcConfFile = '/etc/rc.conf';
-    $isEnabled = test("grep -sFq 'elasticsearch_enable=\"YES\"' $rcConfFile");
+    $isEnabled = test('grep -sFq \'elasticsearch_enable="YES"\' ' . $rcConfFile);
 
     if ($isEnabled) {
         run('sudo service elasticsearch restart');
@@ -166,14 +124,14 @@ task('install:elasticsearch', function () {
     }
 
     $rcConfFileIndex = createBackupFile($rcConfFile);
-    run("sudo echo 'elasticsearch_enable=\"YES\"' >> $rcConfFile");
+    run('sudo echo \'elasticsearch_enable="YES"\' >> ' . $rcConfFile);
     deleteDuplicateBackupFile($rcConfFile, $rcConfFileIndex);
     run('sudo service elasticsearch start');
 })->onRoles('Root');
 
 
 desc('Output the IP addresses for the host');
-task('domain:dns', function () {
+task('domain:dns', static function (): void {
     $ipv4 = runLocally('dig +short {{hostname}}');
     $ipv6 = run('ifconfig epair0b | grep inet | grep -v fe80 | cut -w -f3');
     outputTable(
@@ -186,16 +144,15 @@ task('domain:dns', function () {
 })->shallow()->onRoles('Proserver');
 
 
-task('domain:ssl:domain', function () {
+task('domain:ssl:domain', static function (): void {
     $GLOBALS['domain'] = getRealHostname();
 })->setPrivate()->shallow()->onRoles('Proserver');
 
-task('domain:ssl:write', function () {
+task('domain:ssl:write', static function (): void {
     $file = '/var/www/letsencrypt/domains.txt';
-    $fileIndex = createBackupFile($file);
-    $domainsString = cleanUpWhitespaces(run("cat $file"));
-    $currentArray = explode(' ', $domainsString);
-    $currentEntry = implode("\n", $currentArray);
+    $domainsString = cleanUpWhitespaces(run('cat ' . $file));
+    $currentArray = \explode(' ', $domainsString);
+    $currentEntry = \implode("\n", $currentArray);
 
     writebox("<strong>Add Let's Encrypt SSL certificate</strong>
 If you have multiple domains, you will be asked
@@ -207,7 +164,7 @@ $currentEntry
 To cancel enter <strong>exit</strong> as answer");
 
     $firstDomain = askDomain('Please enter the domain', "{$GLOBALS['domain']} www.{$GLOBALS['domain']}");
-    if ($firstDomain == 'exit') {
+    if ($firstDomain === 'exit') {
         return;
     }
     $domains = [
@@ -216,7 +173,7 @@ To cancel enter <strong>exit</strong> as answer");
 
     writeln('');
     while ($domain = askDomain('Please enter another domain or press enter to continue')) {
-        if ($domain == 'exit') {
+        if ($domain === 'exit') {
             return;
         }
         if ($domain) {
@@ -226,28 +183,26 @@ To cancel enter <strong>exit</strong> as answer");
     }
 
     // Make sure every domain has a single entry
-    $domains = explode(' ', cleanUpWhitespaces(implode(' ', $domains)));
+    $domains = \explode(' ', cleanUpWhitespaces(\implode(' ', $domains)));
 
-    // Remove entries who already exists and remove double entries
-    $domains = array_unique(array_diff($domains, $currentArray));
+    // Remove entries which already exist and remove double entries
+    $domains = \array_unique(\array_diff($domains, $currentArray));
 
     // Save all domains in one string
-    $uniqueDomains = implode(' ', array_merge($currentArray, $domains));
+    $uniqueDomains = \implode(' ', \array_merge($currentArray, $domains));
 
-    // Save new entries for output on the end
-    $newEntries = implode("\n", $domains);
-
-    run("echo '$uniqueDomains' > /var/www/letsencrypt/domains.txt");
-    writebox("<strong>Following entries are added:</strong><br><br>$newEntries", 'green');
+    $fileIndex = createBackupFile($file);
+    run("echo '$uniqueDomains' > $file");
     deleteDuplicateBackupFile($file, $fileIndex);
+    writebox('<strong>Following entries where added:</strong><br><br>' . \implode("\n", $domains), 'green');
 })->setPrivate()->shallow()->onRoles('Root');
 
 desc('Requested the SSl certificate');
-task('domain:ssl:request', function () {
+task('domain:ssl:request', static function (): void {
     run('sudo dehydrated -c');
 })->onRoles('Root');
 
-desc("Add Let's Encrypt SSL certificate");
+desc('Add Let\'s Encrypt SSL certificate');
 task('domain:ssl', [
     'domain:ssl:domain',
     'domain:ssl:write',
@@ -255,19 +210,39 @@ task('domain:ssl', [
 ])->shallow();
 
 
-task('domain:force:ask', function () {
+desc('Remove domain(s) from Let\'s Encrypt SSL certificate list');
+task('domain:ssl:remove', static function (): void {
+    $file = '/var/www/letsencrypt/domains.txt';
+    $domainsString = cleanUpWhitespaces(run("cat $file"));
+    $oldDomainArray = \explode(' ', $domainsString);
+    $domainsToRemove = askChoice(' Which domains should be removed? You can select multiple domains (comma-separated) ', array_diff($oldDomainArray, [get('hostname')]), null, true);
+    // Save all domains in one string
+    $newDomainsEntry = \implode(' ', \array_diff($oldDomainArray, $domainsToRemove));
+
+    // Save removed entries for output on the end
+    $removedEntries = \implode("\n", $domainsToRemove);
+
+    $fileIndex = createBackupFile($file);
+    run('echo "' . $newDomainsEntry . '" > ' . $file);
+    deleteDuplicateBackupFile($file, $fileIndex);
+    writebox('<strong>Following entries where removed:</strong><br><br>' . $removedEntries, 'green');
+})->shallow()->onRoles('Root');
+
+
+task('domain:force:ask', static function (): void {
     if (askConfirmation(' Do you want to force a specific domain? ', true)) {
         $realHostname = getRealHostname();
 
         // Check if the realDomain seems to have a subdomain
-        $defaultDomain = substr_count($realHostname, '.') > 1 ? $realHostname : "www.{$realHostname}";
-        $suggestions = [$realHostname, "www.{$realHostname}"];
+        $wwwDomain = 'www.' . $realHostname;
+        $defaultDomain = \substr_count($realHostname, '.') > 1 ? $realHostname : $wwwDomain;
+        $suggestions = [$realHostname, $wwwDomain];
         $GLOBALS['domain'] = askDomain('Please enter the domain', $defaultDomain, $suggestions);
     }
 })->setPrivate()->shallow()->onRoles('Proserver');
 
-task('domain:force:write', function () {
-    if (!isset($GLOBALS['domain']) || $GLOBALS['domain'] == 'exit') {
+task('domain:force:write', static function (): void {
+    if (!isset($GLOBALS['domain']) || $GLOBALS['domain'] === 'exit') {
         return;
     }
 
@@ -275,32 +250,32 @@ task('domain:force:write', function () {
     $confFileIndex = createBackupFile($confFile);
 
     // Count entries. If there are more than two entries we just overwrite the domain
-    $numberOfEntries = intval(str_replace(' ', '', run("cat $confFile | grep -c 'server {'")));
+    $numberOfEntries = (int) \str_replace(' ', '', run("cat $confFile | grep -c 'server {'"));
     if ($numberOfEntries > 2) {
-        writebox("There is already a domain defined. I'll overwrite the domain");
-        $fileContent = run("cat $confFile");
+        writebox('There is already a domain defined. I\'ll overwrite the domain');
+        $fileContent = run('cat ' . $confFile);
         // Replace redirections
-        $fileContent = preg_replace('/^([ ]*return \d{3}) https:\/\/(.+)\$request_uri;$/m', "$1 https://{$GLOBALS['domain']}\$request_uri;", $fileContent);
+        $fileContent = \preg_replace('/^([ ]*return \d{3}) https:\/\/(.+)\$request_uri;$/m', "$1 https://{$GLOBALS['domain']}\$request_uri;", $fileContent);
         // Replace server names
-        $fileContent = preg_replace('/^([ ]*server_name) ((?!\.proserver\.punkt\.de).)*$/m', "$1 {$GLOBALS['domain']};", $fileContent);
+        $fileContent = \preg_replace('/^([ ]*server_name) ((?!\.proserver\.punkt\.de).)*$/m', "$1 {$GLOBALS['domain']};", $fileContent);
         // Overwrite the file
         run("echo '{$fileContent}' > $confFile");
         return;
     }
 
     $redirectString = "  location / {\n    return 301 https://{$GLOBALS['domain']}\$request_uri;\n  }";
-    $firstLinenummerSecondEntry = run("cat $confFile | grep -n 'server {' | cut -d: -f 1 | tail -1");
-    $lastLinenummerFirstEntry = intval($firstLinenummerSecondEntry) - 1;
+    $firstLineNumberSecondEntry = run("cat $confFile | grep -n 'server {' | cut -d: -f 1 | tail -1");
+    $lastLineNumberFirstEntry = (int) $firstLineNumberSecondEntry - 1;
 
-    $firstEntry = run("head -{$lastLinenummerFirstEntry} $confFile");
-    $secondEntry = run("tail -{$firstLinenummerSecondEntry} $confFile");
+    $firstEntry = run("head -{$lastLineNumberFirstEntry} $confFile");
+    $secondEntry = run("tail -{$firstLineNumberSecondEntry} $confFile");
 
-    // Genereate the 3 server sections
-    $httpRedirectEntry = str_replace('$host', $GLOBALS['domain'], $firstEntry);
-    $httpsRedirectEntry = preg_replace('/^\s*include\s(.)+$\n/m', '', $secondEntry);
-    $httpsRedirectEntry = str_replace('}', "\n$redirectString\n}", $httpsRedirectEntry);
-    $httpsEntry = str_replace(' default_server', '', $secondEntry);
-    $httpsEntry = preg_replace('/server_name (.)+$/m', "server_name {$GLOBALS['domain']};", $httpsEntry);
+    // Generate the 3 server sections
+    $httpRedirectEntry = \str_replace('$host', $GLOBALS['domain'], $firstEntry);
+    $httpsRedirectEntry = \preg_replace('/^\s*include\s(.)+$\n/m', '', $secondEntry);
+    $httpsRedirectEntry = \str_replace('}', "\n$redirectString\n}", $httpsRedirectEntry);
+    $httpsEntry = \str_replace(' default_server', '', $secondEntry);
+    $httpsEntry = \preg_replace('/server_name (.)+$/m', "server_name {$GLOBALS['domain']};", $httpsEntry);
 
     // Overwrite the file
     $fileContent = "{$httpRedirectEntry}\n{$httpsRedirectEntry}\n{$httpsEntry}";
@@ -317,7 +292,7 @@ task('domain:force', [
 
 
 desc('Activate sendmail on the server');
-task('install:sendmail', function () {
+task('install:sendmail', static function (): void {
     $rcConfFile = '/etc/rc.conf';
     $aliasesConfFile = '/etc/mail/aliases';
     // Is it already enabled?
@@ -350,9 +325,12 @@ task('install:sendmail', function () {
 
 
 desc('Restart server');
-task('restart:server', function () {
-    if (get('runningServer') != get('server')) {
-        writebox('deployer.yaml is configured to run with <strong>{{server}}</strong>,<br />but the server runs with <strong>{{runningServer}}</strong>', 'red');
+task('restart:server', static function (): void {
+    if (get('runningServer') !== get('server')) {
+        writebox(
+            'deployer.yaml is configured to run with <strong>{{server}}</strong>,<br />but the server runs with <strong>{{runningServer}}</strong>',
+            'red'
+        );
         if (askConfirmation(' Should I switch the to the configured server? ', true)) {
             invoke('install:set_server');
         }
@@ -369,19 +347,48 @@ task('restart:server', function () {
 })->onRoles('Root');
 
 
+task('install:update:nginx', static function (): void {
+    run("sudo sed -i '' 's/neos\.conf/html\.conf/' /usr/local/etc/nginx/vhosts/ssl.conf");
+})->setPrivate()->onRoles('Root');
+
+task('install:update:database', static function (): void {
+    $oldDatabase = getDbNameFromConfigFile();
+    $newDatabase = $GLOBALS['dbName'];
+    renameDB($oldDatabase, $newDatabase);
+    writeNewDbNameInConfigFile($newDatabase);
+})->setPrivate()->onRoles('Proserver');
+
+
+task('install:update:proserver', [
+    'install:set_globals',
+    'install:set_credentials',
+    'install:write_my_cnf',
+    'install:update:database',
+    'install:update:nginx',
+    'install:nginx',
+    'install:apache',
+    'install:redis',
+    'install:elasticsearch',
+    'restart:server',
+    'deploy',
+])->shallow()->setPrivate();
+
+after('install:update', 'install:update:proserver');
+
+
 desc('Set server to Apache or Nginx');
-task('install:set_server', function () {
+task('install:set_server', static function (): void {
     $server = get('server');
-    if (get('runningServer') != $server) {
-        invoke("install:set_server:$server");
-        set('runningServer', function () {
+    if (get('runningServer') !== $server) {
+        invoke('install:set_server:' . $server);
+        set('runningServer', static function (): ?string {
             return getRunningServerSystemProserver();
         });
         writebox('Set server to <strong>{{runningServer}}</strong>');
     }
 })->shallow()->onRoles('Root');
 
-task('install:set_server:apache', function () {
+task('install:set_server:apache', static function (): void {
     $configFile = '/etc/rc.conf';
     $configFileIndex = createBackupFile($configFile);
     run('sudo service nginx stop');
@@ -390,7 +397,7 @@ task('install:set_server:apache', function () {
     deleteDuplicateBackupFile($configFile, $configFileIndex);
 })->shallow()->setPrivate()->onRoles('Root');
 
-task('install:set_server:nginx', function () {
+task('install:set_server:nginx', static function (): void {
     $configFile = '/etc/rc.conf';
     $configFileIndex = createBackupFile($configFile);
     run('sudo service apache24 stop');
@@ -400,8 +407,8 @@ task('install:set_server:nginx', function () {
 })->shallow()->setPrivate()->onRoles('Root');
 
 
-task('install:apache', function () {
-    $vHostTemplate = parse(file_get_contents(__DIR__ . '/../template/proserver/apache/vhost.conf'));
+task('install:apache', static function (): void {
+    $vHostTemplate = parse(\file_get_contents(__DIR__ . '/../template/proserver/apache/vhost.conf'));
     $vhostConfFile = '/usr/local/etc/apache24/Includes/vhost.conf';
     $httpConfFile = '/usr/local/etc/apache24/httpd.conf';
     $loadModuleEntry = 'LoadModule alias_module libexec/apache24/mod_alias.so';
@@ -424,8 +431,8 @@ task('install:apache', function () {
 before('install:set_server:apache', 'install:apache');
 
 
-task('install:nginx', function () {
-    $htmlConfTemplate = parse(file_get_contents(__DIR__ . '/../template/proserver/nginx/html.conf'));
+task('install:nginx', static function (): void {
+    $htmlConfTemplate = parse(\file_get_contents(__DIR__ . '/../template/proserver/nginx/html.conf'));
 
     $htmlConfFile = '/usr/local/etc/nginx/include/html.conf';
     $sslConfFile = '/usr/local/etc/nginx/vhosts/ssl.conf';
@@ -443,32 +450,43 @@ before('install:set_server:nginx', 'install:nginx');
 
 
 desc('Restart PHP');
-task('restart:php', function () {
+task('restart:php', static function (): void {
     run('sudo service php-fpm reload');
 })->onRoles('Root');
 after('deploy:symlink', 'restart:php');
 
+desc('Set the symbolic link for this site');
+task('install:symlink', [
+    'install:symlink:ask',
+    'install:symlink:php'
+]);
+
+task('install:symlink:ask', static function (): void {
+    cd('{{html_path}}');
+    $GLOBALS['symlinkAction'] = symlinkDomain();
+})->shallow()->onRoles('Proserver')->setPrivate();
+
+task('install:symlink:php', static function (): void {
+    if ($GLOBALS['symlinkAction'] === 'setToDefault') {
+        invoke('restart:php');
+    }
+})->shallow()->onRoles('Root')->setPrivate();
+
 
 desc('Edit the cronjobs');
-task('edit:cronjob', function () {
+task('edit:cronjob', static function (): void {
     $user = askChoice(' Which user should run the cronjob? ', ['proserver', 'root']);
     run("sudo EDITOR=nano crontab -u $user -e", ['timeout' => null, 'tty' => true]);
 })->shallow()->onRoles('Root');
 
+task('install:write_my_cnf', static function (): void {
+    $file = get('roles') === 'Root' ? parse('/home/{{user}}/.my.cnf') : '~/.my.cnf';
 
-after('rollback:publishresources', 'restart:php');
-
-desc('Set the symbolic link for this site');
-task('install:symlink', function () {
-    cd('{{html_path}}');
-    symlinkDomain('Web');
-})->onRoles('Proserver');
-
-
-task('install:settings', function () {
-    $settingsTemplate = parse(file_get_contents(__DIR__ . '/../template/proserver/neos/Settings.yaml'));
-    run("echo '$settingsTemplate' > {{release_path}}/Configuration/Settings.yaml");
-})->setPrivate()->onRoles('Proserver');
+    if (test("[ -f $file ]")) {
+        return;
+    }
+    run("echo '[client]\nuser = {{dbUser}}\npassword = {{dbPassword}}' > $file");
+})->setPrivate();
 
 
 $roleProserverTasks = [
@@ -494,6 +512,8 @@ $roleProserverTasks = [
     'install:info',
     'install:output_db',
     'install:success',
+    'install:update:deployfolder',
+    'install:update:sshkey',
     'install:wait',
     'node:migrate',
     'node:repair',
@@ -504,15 +524,54 @@ $roleProserverTasks = [
     'slack:notify:success',
     'slack:notify',
     'ssh:key',
-    'user:create_admin'
+    'user:create_admin',
 ];
 foreach ($roleProserverTasks as $task) {
     task($task)->onRoles('Proserver');
 }
 
-$roleRootTasks = [
-    'install:create_database'
-];
-foreach ($roleRootTasks as $task) {
-    task($task)->onRoles('Root');
-}
+desc('Initialize Neos installation on proserver.punkt.de');
+task('install', [
+    'deploy:prepare',
+    'deploy:lock',
+    'install:info',
+    'install:check_server_email',
+    'install:check',
+    'ssh:key',
+    'install:wait',
+    'install:set_server',
+    'install:sendmail',
+    'install:set_globals',
+    'install:set_credentials',
+    'install:write_my_cnf',
+    'deploy:release',
+    'deploy:update_code',
+    'deploy:vendors',
+    'deploy:shared',
+    'deploy:writable',
+    'install:settings',
+    'install:create_database',
+    'install:import',
+    'install:redis',
+    'install:elasticsearch',
+    'deploy:run_migrations',
+    'deploy:publish_resources',
+    'install:symlink',
+    'deploy:symlink',
+    'cleanup',
+    'install:nginx',
+    'install:apache',
+    'restart:server',
+    'deploy:unlock',
+    'install:success',
+    'install:output_db',
+    'domain:dns',
+])->shallow();
+
+after('rollback:publishresources', 'restart:php');
+
+
+task('install:settings', static function (): void {
+    $settingsTemplate = parse(\file_get_contents(__DIR__ . '/../template/proserver/neos/Settings.yaml'));
+    run("echo '$settingsTemplate' > {{release_path}}/Configuration/Settings.yaml");
+})->setPrivate()->onRoles('Proserver');
