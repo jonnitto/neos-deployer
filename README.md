@@ -20,6 +20,7 @@ Currently, there are settings for these hosters:
 
 - [proServer from punkt.de]
 - [Uberspace]
+- [Mittwald]
 
 ## Slack webhook
 
@@ -77,4 +78,6 @@ Run these tasks with `dep COMMAND`. If you want to list all commands, enter `dep
 [examples]: examples
 [proserver from punkt.de]: documentation/proServer.md
 [uberspace]: documentation/Uberspace.md
+[Mittwald]: documentation/Mittwald.md
+
 [slack webhook]: https://slack.com/oauth/authorize?&client_id=113734341365.225973502034&scope=incoming-webhook
