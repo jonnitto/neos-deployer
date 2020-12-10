@@ -2,49 +2,13 @@
 
 namespace Deployer;
 
-require_once __DIR__ . '/../../../deployer/recipes/recipe/slack.php';
+require_once __DIR__ . '/defaultValues.php';
+require_once __DIR__ . '/slack.php';
 require_once __DIR__ . '/functions.php';
 
 
-set('bash_sync', 'https://raw.githubusercontent.com/jonnitto/bash/master/bash.sh');
-
-set('slack_title', function () {
-    return get('application', getRealHostname());
-});
-
-// Set default values
-set('port', 22);
-set('forwardAgent', false);
-set('multiplexing', true);
-set('deployUser', function () {
-    $getUserCommand = 'git config --get user.name';
-    $user = get('user');
-    if (!testLocally("$getUserCommand 2>/dev/null || true")) {
-        $user = runLocally($getUserCommand);
-    }
-    return $user;
-});
-set('slack_text', '_{{deployUser}}_ deploying `{{branch}}` to *{{target}}*');
-set('release_name', function () {
-    return run('date +"%Y-%m-%d__%H-%M-%S"');
-});
-set('sshKey', 'id_rsa');
-
-
 desc('Create and/or read the deployment key');
-task('ssh:key', function () {
-    $userAndHostArray = explode('@', explode(":", get('repository'))[0]);
-    $repoServer = end($userAndHostArray);
-    $repoServerArray = explode(".", $repoServer);
-
-    $repoDomain = $repoServerArray[count($repoServerArray) - 2] . "." . $repoServerArray[count($repoServerArray) - 1];
-    $needToSetGitUser = count($userAndHostArray) > 1 ? false : true;
-
-    $realHostname = getRealHostname();
-
-    $sshConfigFile = '~/.ssh/config';
-    $sshKnowHostsFile = '~/.ssh/known_hosts';
-
+task('ssh:key', static function () {
     if (!test('[ -f ~/.ssh/{{sshKey}}.pub ]')) {
         // -q Silence key generation
         // -t Set algorithm
@@ -55,46 +19,32 @@ task('ssh:key', function () {
         run('cat /dev/zero | ssh-keygen -q -t rsa -b 4096 -N "" -C "$(hostname -f)" -f ~/.ssh/{{sshKey}}');
     }
 
-    if (($repoDomain != $repoServer || $needToSetGitUser) && !test("grep -q '^Host $repoServer$' $sshConfigFile")) {
-        // Write ssh config (needed if we have multiple sites on one server)
-        $entry = "Host $repoServer\n  HostName $repoDomain\n  IdentityFile ~/.ssh/{{sshKey}}\n";
-        if ($needToSetGitUser) {
-            $entry .= "  User git\n";
-        }
-        run("echo \"$entry\" >> $sshConfigFile");
-    }
-
     // We dont use `ssh-keygen -y` because we also want to output the comment
-    $pub = run('cat ~/.ssh/{{sshKey}}.pub');
-    writebox("The public key ({{sshKey}}.pub) from <strong>$realHostname</strong> is:");
-    writeln("<info>$pub</info>");
+    writebox('The public key ({{sshKey}}.pub) from <strong>' . getRealHostname() . '</strong> is:');
+    writeln('<info>' . run('cat ~/.ssh/{{sshKey}}.pub') . '</info>',);
     writeln('');
 
-    if ($repoDomain && !test("grep -q '$repoDomain' $sshKnowHostsFile")) {
-        run("ssh-keyscan $repoDomain >> $sshKnowHostsFile");
+    $sshKnowHostsFile = '~/.ssh/known_hosts';
+    $repoHost = get('repositoryUrlParts')['host'];
+
+    if (!test("grep -q '$repoHost' $sshKnowHostsFile")) {
+        run("ssh-keyscan $repoHost >> $sshKnowHostsFile");
     }
 })->shallow();
 
 
-desc('Install the synchronized bash script');
-task('install:bash', function () {
-    if (!get('bash_sync', false)) {
-        return;
-    }
-    run('wget -qN {{bash_sync}} -O syncBashScript.sh; source syncBashScript.sh');
-})->shallow();
 
 
-task('install:info', function () {
-    $realHostname = getRealHostname();
-    writebox("✈︎ Installing <strong>$realHostname</strong> on <strong>{{hostname}}</strong>");
+task('install:info', static function (): void {
+    writebox('✈︎ Installing <strong>' . getRealHostname() . '</strong> on <strong>{{hostname}}</strong>');
 })->shallow()->setPrivate();
 
 
 desc('Wait for the user to continue');
-task('install:wait', function () {
-    writebox("<strong>Add this key as a deployment key in your repository</strong><br>under → Settings → Deploy keys");
+task('install:wait', static function (): void {
+    writebox('<strong>Add this key as a deployment key in your repository</strong><br>under → Settings → Deploy keys');
     if (!askConfirmation(' Press enter to continue ', true)) {
+        invoke('deploy:unlock');
         writebox('Installation canceled', 'red');
         exit;
     }
@@ -102,14 +52,14 @@ task('install:wait', function () {
 })->shallow()->setPrivate();
 
 
-task('install:create_database', function () {
-    run(sprintf('echo %s | %s', escapeshellarg(dbFlushDbSql(get('dbName'))), dbConnectCmd(get('dbUser'), get('dbPassword'))));
+task('install:create_database', static function (): void {
+    run(\sprintf('echo %s | mysql', \escapeshellarg(dbFlushDbSql(get('dbName')))));
 })->setPrivate();
 
 
-task('install:output_db', function () {
+task('install:output_db', static function (): void {
     outputTable(
-        'Following database credentias are set:',
+        'Following database credentials are set:',
         [
             'Name' => '{{dbName}}',
             'User' => '{{dbUser}}',
@@ -119,18 +69,36 @@ task('install:output_db', function () {
 })->shallow()->setPrivate();
 
 
-task('install:success', function () {
+task('install:output_oauth', static function (): void {
+    outputTable(
+        'Please add these credentials to the oAuth database to enable login:',
+        [
+            'ID' => '{{authId}}',
+            'Secret' => '{{authSecret}}',
+            'Name' => getRealHostname() . ' on {{hostname}}'
+        ]
+    );
+})->shallow()->setPrivate();
+
+task('deploy:git_config', static function () {
+    cd('{{release_path}}');
+    run('{{bin/git}} config --local --add core.sshCommand "ssh -i ~/.ssh/{{sshKey}}"');
+})->setPrivate();
+after('deploy:update_code', 'deploy:git_config');
+
+
+task('install:success', static function (): void {
     $stage = has('stage') ? ' {{stage}}' : '';
-    writebox("<strong>Successfully installed!</strong><br>To deploy your site in the future, simply run <strong>dep deploy$stage</strong>", 'green');
+    writebox('<strong>Successfully installed!</strong><br>To deploy your site in the future, simply run <strong>dep deploy' . $stage . '</strong>', 'green');
 })->shallow()->setPrivate();
 
 
 desc('Create release tag on git');
-task('deploy:tag', function () {
+task('deploy:tag', static function (): void {
     // Set timestamps tag
-    set('tag', date('Y-m-d_T_H-i-s'));
-    set('day', date('d.m.Y'));
-    set('time', date('H:i:s'));
+    set('tag', \date('Y-m-d_T_H-i-s'));
+    set('day', \date('d.m.Y'));
+    set('time', \date('H:i:s'));
 
     runLocally(
         'git tag -a -m "Deployment on the {{day}} at {{time}}" "{{tag}}"'
@@ -140,9 +108,32 @@ task('deploy:tag', function () {
 
 
 after('deploy:failed', 'deploy:unlock');
-before('deploy', 'slack:notify');
-after('success', 'slack:notify:success');
-after('deploy:failed', 'slack:notify:failure');
+fail('install', 'deploy:unlock');
+
+
+desc('Update from an older version of jonnitto/neos-deployer');
+task('install:update', [
+    'install:update:deployfolder',
+    'install:update:sshkey',
+    'install:symlink',
+]);
+
+task('install:update:deployfolder', static function (): void {
+    if (!test('[ -d {{deploy_path}} ]')) {
+        cd('{{html_path}}');
+        run('mv Neos {{deploy_folder}}');
+        writebox('Neos was renamed to {{deploy_folder}}');
+    }
+})->shallow()->setPrivate();
+
+task('install:update:sshkey', static function () {
+    cd('~/.ssh');
+    if (!test('[ -f {{sshKey}}.pub ]')) {
+        run('mv id_rsa {{sshKey}}');
+        run('mv id_rsa.pub {{sshKey}}.pub');
+        writebox('The default ssh key <strong>id_rsa</strong> was renamed to <strong>{{sshKey}}</strong>');
+    }
+})->shallow()->setPrivate();
 
 
 // Set some deploy tasks to private

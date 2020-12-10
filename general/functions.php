@@ -3,12 +3,12 @@
 namespace Deployer;
 
 use Deployer\Task\Context;
-use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * Return the mysql command string to flush a database
- * This is done by dropping the database and create an new, emty one
+ * This is done by dropping the database and create an new, empty one
  *
  * @param string $database The name of the database
  * @param string|null $characterSet (optional) The character set of the new database
@@ -17,28 +17,44 @@ use Symfony\Component\Console\Helper\Table;
 function dbFlushDbSql(string $database, ?string $characterSet = null): string
 {
     if (!$characterSet) {
-        $characterSet = getNeosNamespace() == 'TYPO3' ? 'utf8' : 'utf8mb4';
+        $characterSet = 'utf8mb4';
     }
 
-    return sprintf("DROP DATABASE IF EXISTS `%s`; CREATE DATABASE `%s` CHARACTER SET $characterSet COLLATE {$characterSet}_unicode_ci;", $database, $database);
+    return \sprintf('DROP DATABASE IF EXISTS `%s`; CREATE DATABASE `%s` CHARACTER SET %s COLLATE %s_unicode_ci;', $database, $database, $characterSet, $characterSet);
 }
 
 /**
- * Return the mysql command string to connect to a database
+ * Rename the database by moving the tables to the newly created one
  *
- * @param string $username The username
- * @param string $password The password of the user
- * @param string $host The host to connect to the database, defaults to `localhost`
- * @param integer $port The port of the connection, defaults to `3306`
- * @return string
+ * @param string $oldDatabase
+ * @param string $newDatabase
+ * @return void
  */
-function dbConnectCmd(
-    string $username,
-    string $password,
-    string $host = 'localhost',
-    int $port = 3306
-): string {
-    return sprintf('mysql --host=%s --port=%s --user=%s --password=%s', escapeshellarg($host), escapeshellarg($port), escapeshellarg($username), escapeshellarg($password));
+function renameDB(string $oldDatabase, string $newDatabase): void
+{
+    if ($oldDatabase === $newDatabase) {
+        writebox("Could not rename database, as the names <strong>($oldDatabase)</strong> are identical", 'red');
+        return;
+    }
+
+    if (run("mysqlshow | grep ' $oldDatabase '|wc -l | tr -d '[:space:]'") < 1) {
+        writebox("The database <strong>$oldDatabase</strong> which should be renamed does not exists", 'red');
+        return;
+    }
+
+    if (run("mysqlshow | grep ' $newDatabase '|wc -l | tr -d '[:space:]'") > 0) {
+        writebox("The database with the name <strong>$newDatabase</strong><br>already exists. Please check this manually.", 'red');
+        return;
+    }
+
+    // Create new database
+    run(\sprintf('echo %s | mysql', \escapeshellarg(dbFlushDbSql($newDatabase))));
+    // Move tables
+    run("mysql $oldDatabase -sNe 'show tables' | while read table; do mysql -sNe \"RENAME TABLE $oldDatabase.\$table TO $newDatabase.\$table\"; done");
+    // Drop old database
+    run("mysql -e \"DROP DATABASE IF EXISTS $oldDatabase\"");
+
+    writebox("The database <strong>$oldDatabase</strong> was renamed to <strong>$newDatabase</strong>");
 }
 
 /**
@@ -56,22 +72,15 @@ function dbRemoveLocalDump(): void
  *
  * @param string $path The path where the uploaded files is located
  * @param string $database The name of the database
- * @param string $username The username
- * @param string $password The password of the user
- * @param string $host The host to connect to the database, defaults to `localhost`
- * @param integer $port The port of the connection, defaults to `3306`
+ *
  * @return void
  */
 function dbExtract(
     string $path,
-    string $database,
-    string $username,
-    string $password,
-    string $host = 'localhost',
-    int $port = 3306
+    string $database
 ): void {
     cd($path);
-    run(sprintf('tar xzOf dump.sql.tgz | %s %s', dbConnectCmd($username, $password, $host, $port), $database));
+    run("tar xzOf dump.sql.tgz | mysql $database");
     run('rm -f dump.sql.tgz');
 }
 
@@ -88,56 +97,62 @@ function getRealHostname(): string
 /**
  * Symlinks a site to a general folder of specific domain
  *
- * @param string $subfolder A subfolder of current for the web root
- * @param string $defaultFolder The folder, where the default targets are
  * @param string|null $previewDomain Custom preview domain. If `null` it defaults to the hostname
  * @return void
  */
-function symlinkDomain(string $subfolder = '', string $defaultFolder = 'html', ?string $previewDomain = null): void
+function symlinkDomain(?string $previewDomain = null): string
 {
+    $defaultFolder = 'html';
     $realDomain = getRealHostname();
-    $folderToWebRoot = parse('{{deploy_folder}}/current' . ($subfolder ? "/$subfolder" : ''));
+    $folderToWebRoot = parse('{{deploy_folder}}/current{{web_root}}');
     $defaultFolderIsSymbolicLink = !test("readlink $defaultFolder 2>/dev/null || true");
     $defaultFolderIsPresent = $defaultFolderIsSymbolicLink ? false : test("[ -d $defaultFolder ]");
 
     if ($defaultFolderIsSymbolicLink && run("readlink $defaultFolder") == $folderToWebRoot) {
         writebox("<strong>$realDomain</strong> is already the default domain<br>There is no need to set a domain folder.");
-        return;
-    }
-
-    if (askConfirmation(" Should $realDomain set as default target on this server? ", true)) {
+        if (!askConfirmation(' Do you want to force also a custom domain? ')) {
+            return 'alreadyDefault';
+        }
+    } elseif (askConfirmation(" Should the default target on this server be set to $realDomain?", true)) {
         if ($defaultFolderIsPresent) {
             if (test("[ -d $defaultFolder.backup ]")) {
                 writebox("<strong>$defaultFolder</strong> is a folder and <strong>$defaultFolder.backup</strong> is also present<br>Please log in and check these folders.", 'red');
-                return;
+                return 'backupFolderPresent';
             }
             run("mv $defaultFolder $defaultFolder.backup");
         }
         run("rm -rf $defaultFolder");
         run("ln -s $folderToWebRoot $defaultFolder");
         writebox("<strong>$realDomain</strong> is now the default target for this server", 'green');
-        return;
-    } else {
-        if (!$previewDomain) {
-            $previewDomain = get('hostname');
-        }
-        $folderToCreate = askDomain('Please enter the domain you want to link this site', "www.{$realDomain}", ["www.{$realDomain}", $realDomain, $previewDomain]);
-        if ($folderToCreate && $folderToCreate != 'exit') {
-            run("rm -rf $folderToCreate");
-            run("ln -s $folderToWebRoot $folderToCreate");
-            writebox("<strong>$folderToCreate</strong> was linked to this site", 'green');
-        }
+        return 'setToDefault';
     }
+
+    if (!$previewDomain) {
+        $previewDomain = get('hostname');
+    }
+    // Check if the realDomain seems to have a subdomain
+    $wwwDomain = 'www.' . $realDomain;
+    $defaultDomain = \substr_count($realDomain, '.') > 1 ? $realDomain : $wwwDomain;
+    $suggestions = [$realDomain, $wwwDomain, $previewDomain];
+    $folderToCreate = askDomain('Please enter the domain you want to link this site', $defaultDomain, $suggestions);
+    if ($folderToCreate && $folderToCreate !== 'exit') {
+        run("rm -rf $folderToCreate");
+        run("ln -s $folderToWebRoot $folderToCreate");
+        writebox("<strong>$folderToCreate</strong> was linked to this site", 'green');
+        return 'linkedToFolder';
+    }
+    return 'nothingDone';
 }
 
 /**
  * Output a table to the console
  *
- * @param string $headline (optional) The headline above the table
+ * @param string|null $headline (optional) The headline above the table
  * @param array $data The data for the table
+ *
  * @return void
  */
-function outputTable(?string $headline = null, array $data): void
+function outputTable(?string $headline, array $data): void
 {
     writeln('');
     writeln('');
@@ -161,41 +176,73 @@ function outputTable(?string $headline = null, array $data): void
 }
 
 /**
- * Ouput a box with content to the console
+ * Output a box with content to the console
  *
  * @param string $content The content of the box. Content in <strong> gets printed bold, <br> / <br/> create a linebreak
  * @param string $bg The background color of the box, defaults to `blue`
- * @param string $color The text color of the box, defaults to `white`
+ * @param string|null $color The text color of the box, defaults to `white`
  * @return void
  */
-function writebox(string $content, string $bg = 'blue', string $color = 'white'): void
+function writebox(string $content, string $bg = 'blue', ?string $color = null): void
 {
+    $colorMap = [
+        'black' => 'white',
+        'red' => 'white',
+        'green' => 'black',
+        'yellow' => 'black',
+        'blue' => 'white',
+        'blue' => 'white',
+        'magenta' => 'white',
+        'cyan' => 'black',
+        'white' => 'black',
+        'default' => 'white',
+    ];
+
+    if ($color === null) {
+        $color = $colorMap[$bg];
+    }
     // Replace strong with bold notation
-    $content = str_replace('</strong>', '</>', str_replace('<strong>', "<bg={$bg};fg={$color};options=bold>", parse($content)));
+    $content = \str_replace(
+        ['<strong>', '</strong>'],
+        ["<bg={$bg};fg={$color};options=bold>", '</>'],
+        parse($content)
+    );
     // Replace br tags with a linebreak
-    $contentArray = preg_split('/(<br[^>]*>|\n)/i', $content);
+    $contentArray = \preg_split('/(<br[^>]*>|\n)/i', $content);
     $contents = [];
     $maxLength = 0;
     foreach ($contentArray as $key => $string) {
-        $length = grapheme_strlen(strip_tags($string));
-        $contents[$key] = [
-            'length' => $length,
-            'string' => $string
-        ];
+        $length = \grapheme_strlen(\strip_tags($string));
+        $contents[$key] = \compact('length', 'string');
         if ($length > $maxLength) {
             $maxLength = $length;
         }
     }
-    $placeholder = str_repeat(' ', $maxLength);
+    $placeholder = \str_repeat(' ', $maxLength);
 
     writeln('');
     writeln("<bg={$bg}> {$placeholder} </>");
     foreach ($contents as $array) {
-        $space = str_repeat(' ', $maxLength - $array['length']);
+        $space = \str_repeat(' ', $maxLength - $array['length']);
         writeln("<bg={$bg};fg={$color}> {$array['string']}{$space} </>");
     }
     writeln("<bg={$bg}> {$placeholder} </>");
     writeln('');
+}
+
+
+/**
+ * Return the database name
+ *
+ * @param string $prefix
+ * @return string
+ */
+function getDbName(string $prefix = '{{user}}_'): string
+{
+    $stage = has('stage') ? '_{{stage}}' : '';
+    $name = has('database') ? '{{database}}' : camelCaseToSnakeCase(get('repositoryShortName')) . '_neos';
+
+    return parse($prefix . $name . $stage);
 }
 
 /**
@@ -209,7 +256,7 @@ function cleanUpWhitespaces(?string $string = null): ?string
     if (!$string) {
         return null;
     }
-    return preg_replace('/\s+/', ' ', trim($string));
+    return \preg_replace('/\s+/', ' ', \trim($string));
 }
 
 /**
@@ -223,7 +270,7 @@ function cleanUpWhitespaces(?string $string = null): ?string
 function askDomain(string $text, ?string $default = null, ?array $suggestedChoices = null): ?string
 {
     $domain = cleanUpWhitespaces(ask(" $text ", $default, $suggestedChoices));
-    if ($domain == 'exit') {
+    if ($domain === 'exit') {
         writebox('Canceled, nothing was written', 'red');
         return 'exit';
     }
@@ -235,19 +282,22 @@ function askDomain(string $text, ?string $default = null, ?array $suggestedChoic
 
 /**
  * Creates a backup of a file
- * The backup file get a upcounting number for different backup file. This number get also returned
+ * The backup files are appended with ascending numbers for each new backup file. This number is also returned.
  *
- * @param string $file The file who should get a backup
- * @return integer
+ * @param string $file The file for which a backup should be created
+ * @param bool $sudo
+ *
+ * @return int
  */
-function createBackupFile(string $file): int
+function createBackupFile(string $file, bool $sudo = true): int
 {
     $i = 1;
+    $prefixCommand = $sudo ? 'sudo ' : '';
     while (test("[ -f $file.backup.$i ]")) {
         $i++;
     }
     if (test("[ -f $file ]")) {
-        run("sudo cp -i $file $file.backup.$i");
+        run("{$prefixCommand}cp -i $file $file.backup.$i");
     }
     return $i;
 }
@@ -255,32 +305,35 @@ function createBackupFile(string $file): int
 /**
  * Compares a backup file to the previous one and deletes it if they have the same content
  *
- * @param string $file The orignal file name
- * @param integer $i The index of the last created backup file
+ * @param string $file The original file name
+ * @param int $i The index of the last created backup file
+ *
  * @return void
  */
-function deleteDuplicateBackupFile(string $file, int $i = 1): void
+function deleteDuplicateBackupFile(string $file, int $i = 1, bool $sudo = true): void
 {
     $indexes = [];
+    $prefixCommand = $sudo ? 'sudo ' : '';
     while (($i > 1) && compareBackupFiles($file, $i)) {
         $indexes[] = $i;
         $i--;
     }
     $count = count($indexes);
-    $indexes = join(',', $indexes);
+    $indexes = \implode(',', $indexes);
     $indexes = $count > 1 ? '{' . $indexes . '}' : $indexes;
     if ($count) {
         // Delete all files at once
-        run("sudo rm -f $file.backup.$indexes");
+        run("{$prefixCommand}rm -f $file.backup.$indexes");
     }
 }
 
 /**
  * Compare to backup files
  *
- * @param string $file The orignal file name
- * @param integer $i The index of the created backup file
- * @return boolean
+ * @param string $file The original file name
+ * @param int $i The index of the created backup file
+ *
+ * @return bool
  */
 function compareBackupFiles(string $file, int $i): bool
 {
@@ -299,31 +352,65 @@ function compareBackupFiles(string $file, int $i): bool
  */
 function dbLocalDumpNeos(): void
 {
-    $namespace = getNeosNamespace();
-    $yaml = runLocally("./flow configuration:show --type Settings --path $namespace.Flow.persistence.backendOptions");
+    $yaml = runLocally('./flow configuration:show --type Settings --path Neos.Flow.persistence.backendOptions');
     $settings = Yaml::parse($yaml);
-    $port = isset($settings['port']) ? $settings['port'] : '3306';
+    $port = $settings['port'] ?? '3306';
     runLocally("mysqldump -h {$settings['host']} -P {$port} -u {$settings['user']} -p{$settings['password']} {$settings['dbname']} > dump.sql");
     runLocally('tar cfz dump.sql.tgz dump.sql');
 }
 
 /**
- * Returns the namespace from Neos
- * 
- * @return string 
+ * Get database name from config file
+ *
+ * @return string|null
  */
-
-function getNeosNamespace(): string
+function getDbNameFromConfigFile(): ?string
 {
-    if (testLocally('composer info typo3/neos -q')) {
-        return 'TYPO3';
-    } else {
-        return 'Neos';
+    $neosConfigFile = parse('{{release_path}}/Configuration/Settings.yaml');
+    if (test("[ -f $neosConfigFile ]")) {
+        $settings = Yaml::parse(run("cat $neosConfigFile"));
+        return $settings['Neos']['Flow']['persistence']['backendOptions']['dbname'];
+    }
+    return null;
+}
+
+/**
+ * Write new database name into the config file
+ *
+ * @param string $newDatabaseName
+ * @return void
+ */
+function writeNewDbNameInConfigFile(string $newDatabaseName): void
+{
+    $neosConfigFile = parse('{{release_path}}/Configuration/Settings.yaml');
+    if (test("[ -f $neosConfigFile ]")) {
+        $fileContent = run("cat $neosConfigFile");
+        $settings = Yaml::parse($fileContent);
+        if (isset($settings['Neos']['Flow']['persistence']['backendOptions']['dbname'])) {
+            $settings['Neos']['Flow']['persistence']['backendOptions']['dbname'] = $newDatabaseName;
+            $newFileContent = Yaml::dump($settings);
+            if ($fileContent !== $newFileContent) {
+                $fileIndex = createBackupFile($neosConfigFile, false);
+                run(\sprintf('echo %s > %s', \escapeshellarg($newFileContent), $neosConfigFile));
+                deleteDuplicateBackupFile($neosConfigFile, $fileIndex, false);
+            }
+        }
     }
 }
 
 /**
- * Compress the local resoures of Neos
+ * Convert a string to snake_case
+ *
+ * @param string $input
+ * @return string
+ */
+function camelCaseToSnakeCase(string $input): string
+{
+    return \strtolower(\preg_replace('/(?<!^)[A-Z]/', '_$0', $input));
+}
+
+/**
+ * Compress the local resources of Neos
  *
  * @return void
  */
@@ -353,8 +440,8 @@ function resourcesDecompressNeos(string $path): void
  */
 function resourcesRepairPermissionsNeos(): void
 {
-    cd('{{deploy_path}}/shared/Data/Persistent/Resources');
     $group = run('id -g -n');
+    cd('{{release_path}}/Data/Persistent/Resources');
     writeln('Setting file permissions per file, this might take a while ...');
     run("chown -R {{user}}:{$group} .");
     run('find . -type d -exec chmod 775 {} \;');
@@ -370,7 +457,7 @@ function resourcesRepairPermissionsNeos(): void
 function resourcesUploadNeos(string $path): void
 {
     resourcesLocalCompressNeos();
-    upload("Resources.tgz", "{$path}/Resources.tgz", ['timeout' => null]);
+    upload("Resources.tgz", $path . '/Resources.tgz', ['timeout' => null]);
     resourcesDecompressNeos($path);
     resourcesRepairPermissionsNeos();
 }
@@ -380,23 +467,16 @@ function resourcesUploadNeos(string $path): void
  *
  * @param string $path The path where the file should be uploaded
  * @param string $database The name of the database
- * @param string $username The username
- * @param string $password The password of the user
- * @param string $host The host to connect to the database, defaults to `localhost`
- * @param integer $port The port of the connection, defaults to `3306`
+ *
  * @return void
  */
 function dbUploadNeos(
     string $path,
-    string $database,
-    string $username,
-    string $password,
-    string $host = 'localhost',
-    int $port = 3306
+    string $database
 ): void {
     dbLocalDumpNeos();
-    upload('dump.sql.tgz', "{$path}/dump.sql.tgz");
-    dbExtract($path, $database, $username, $password, $host, $port);
+    upload('dump.sql.tgz', $path . '/dump.sql.tgz', ['timeout' => null]);
+    dbExtract($path, $database);
     dbRemoveLocalDump();
 }
 
@@ -405,7 +485,7 @@ function dbUploadNeos(
  */
 
 /**
- * Upload a file to the Proserver (done with ProxyJumo)
+ * Upload a file to the Proserver (done with ProxyJump)
  *
  * @param string $file The filename
  * @param string $path The location where the file should get uploaded
@@ -425,7 +505,9 @@ function getRunningServerSystemProserver(): ?string
 {
     if (run('ps -acx|grep httpd|wc -l | tr -d "[:space:]"') > 0) {
         return 'apache';
-    } elseif (run('ps -acx|grep nginx|wc -l | tr -d "[:space:]"') > 0) {
+    }
+
+    if (run('ps -acx|grep nginx|wc -l | tr -d "[:space:]"') > 0) {
         return 'nginx';
     }
 

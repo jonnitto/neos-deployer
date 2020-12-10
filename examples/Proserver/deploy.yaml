@@ -17,19 +17,16 @@
   # Put here the username
   user: vpro__XXXX__
 
-  # Enter which ssh key should be generated and used
-  # Defaults to id_rsa
+  # Enter the filename for the deploy key which will be generated for pulling the repository
+  # Defaults to the RepositoryShortname
   sshKey: 'special_key'
 
   # Put here the ssh repository
-  # If the user is not provided, the user git get used (with the help of a ssh config file)
-  # If the domain has more than domain.tld, an configuration entry in ~/.ssh/config will be genereated.
-  # In combinantion with `sshKey` this can be used if multiple sites are needed on one host
   repository: git@github.com:__OWNER__/__REPOSITORY__.git
 
   # Put here the database name
-  # If this settings is not provided it will defaults to `USER_neos`
-  # If a value is provided, this will used as replacement for `neos`, the USER get prefixed automatically
+  # If this settings is not provided it will defaults to `USER_repository_shortname_neos`
+  # If a value is provided, this will used as replacement for the system (neos), the USER get prefixed automatically
   database: domain_tld
 
   # Add here your the webhook
@@ -47,7 +44,7 @@
     - Neos_Media_ImageSize
     - Flow_Security_Cryptography_HashService
 
-  # With Neos.Seo, the robots.txt get included in Neos and enable automatic sitmaplinks
+  # With Neos.Seo, the robots.txt gets included in Neos and enables automatic sitemap links
   # and other features. You can read more about this feature here:
   # https://neos-seo.readthedocs.io/en/stable/#dynamic-robots-txt
   # Defaults to true
@@ -62,7 +59,7 @@
   # If you set this to e.g. Test the FLOW_CONTEXT will be Production/Test
   sub_context: Live
 
-  # Set here the subfolder for the deployment, defaults to Neos
+  # Set here the folder for the deployment, defaults to RepositoryShortname
   deploy_folder: Neos/Subfolder
 
   frontend:
@@ -72,7 +69,7 @@
     message: 'STATIC: Build frontend resources'
     # Add which paths should be added by the frontend:git task.
     # The path will be checked if they exists and have commits
-    # Defaults to ['DistributionPackages/**/Resources/Public']
+    # Defaults to ['DistributionPackages/**/Resources/Public', 'DistributionPackages/**/Resources/Private/InlineAssets']
     paths:
       - 'DistributionPackages/**/Resources/Public'
       - 'DistributionPackages/**/Resources/Private/InlineAssets'
