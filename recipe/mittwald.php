@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Deployer;
 
-require_once 'neos.php';
+require_once __DIR__ . '/../general/neos.php';
 
 set('html_folder', 'neos');
 set('html_path', '/home/www/{{user}}/html');
